@@ -1,2 +1,2 @@
-# zfs-pysend
-Python wrapper for zfs-send
+# python-zfs
+Python wrapper for zfs
