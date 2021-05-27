@@ -13,7 +13,7 @@ def structure_data(transfer_id, data, index):
 			+data
 	)
 
-def deliver(stream, to):
+def deliver(stream, to, on_send=None):
 	assert len(to) == 2 # IP, port
 	assert type(to[0]) is str and type(to[1]) is int
 	assert ipaddress.ip_address(to[0])
@@ -22,6 +22,11 @@ def deliver(stream, to):
 	transfer_id = 1
 	frame_index = 0
 	while (data := stream.read(1024)):
-		sender.sendto(structure_data(transfer_id, data, frame_index), to)
-		sender.sendto(structure_data(transfer_id, data, frame_index), to)
+		frame = structure_data(transfer_id, data, frame_index)
+		
+		if on_send:
+			frame = on_send(frame)
+
+		sender.sendto(frame, to)
+		sender.sendto(frame, to)
 		frame_index += 1
