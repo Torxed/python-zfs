@@ -31,29 +31,6 @@ def unpack_snapshot_frame(frame):
 		"previous_data" : frame[HEADER_LENGTH+data_position:]
 	}
 
-def unpack_informational_frame(frame):
-	frame_type = struct.unpack('B', frame[0:1])[0] # 1 Byte
-	transfer_id = struct.unpack('B', frame[1:2])[0] # 1 Byte
-	crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
-	origin_name_length = struct.unpack('B', frame[6:7])[0] # Length of the snapshot origin name
-	origin_name = frame[7:7+origin_name_length]
-	destination_name_length = struct.unpack('B', frame[7+origin_name_length:7+origin_name_length+1])[0]
-	destination_name = frame[7+origin_name_length+1:7+origin_name_length+1+destination_name_length]
-	end_frame = 7+origin_name_length+1+destination_name_length
-
-	if len(frame[end_frame:]):
-		raise ValueError(f"Recieved to many bytes in informational frame: {len(frame[end_frame:])} bytes to many")
-
-	if crc32_info != zlib.crc32(origin_name + destination_name) & 0xffffffff:
-		raise ValueError(f"CRC32 does not match in the informational frame, most likely corrupt data.")
-
-	return {
-		"frame_type" : frame_type,
-		"transfer_id" : transfer_id,
-		"origin_name" : origin_name.decode('UTF-8'),
-		"destination_name" : destination_name.decode('UTF-8')
-	}
-
 def deliver(stream, to, on_send=None, resend_buffer=2):
 	assert len(to) == 2 # IP, port
 	assert type(to[0]) is str and type(to[1]) is int
@@ -125,7 +102,8 @@ class Reciever:
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
 			# Informational frame for a snapshot (not delta) recieved (always starts with 0)
-			transfer_information = unpack_informational_frame(frame)
+			from .. import Snapshot
+			transfer_information = Snapshot.unpack_informational_frame(frame)
 
 			if transfer_information['transfer_id'] not in self.transfers:
 				self.transfers[transfer_information['transfer_id']] = {
@@ -134,8 +112,9 @@ class Reciever:
 					'data' : []
 				}
 		elif frame[0] == 1:
+			from .. import Delta
 			# Informational frame for a snapshot delta recieved (always starts with 1)
-			transfer_information = unpack_informational_frame(frame)
+			transfer_information = Delta.unpack_informational_frame(frame)
 
 			if transfer_information['transfer_id'] not in self.transfers:
 				self.transfers[transfer_information['transfer_id']] = {
