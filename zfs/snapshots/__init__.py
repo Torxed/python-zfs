@@ -52,6 +52,7 @@ class DeltaReader:
 		self.worker.stdin.flush()
 
 		for fileno in select.select([self.worker.stdout.fileno()], [], [], 0.2):
+			print(fileno)
 			raise KeyError(self.worker.stdout.read(1024))
 
 		for fileno in select.select([self.worker.stderr.fileno()], [], [], 0.2):
