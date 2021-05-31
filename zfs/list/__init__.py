@@ -16,5 +16,5 @@ def snapshots():
 def snapshot():
 	return {snap['name'].decode('UTF-8') : {**{k: v.decode('UTF-8') for k, v in snap.items()}} for snap in snapshots()}
 
-def last_snapshots(n=2):
-	return list(snapshot().keys())[0-n:]
+def last_snapshots(namespace, n=2):
+	return [key for key in snapshot().keys() if namespace in key][0-n:]
