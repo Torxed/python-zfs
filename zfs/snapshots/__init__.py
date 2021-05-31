@@ -1,4 +1,5 @@
 import select
+import struct
 from subprocess import Popen, PIPE, STDOUT
 
 class Snapshot:
