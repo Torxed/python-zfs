@@ -102,7 +102,7 @@ class Reciever:
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
 			# Informational frame for a snapshot (not delta) recieved (always starts with 0)
-			from .. import Snapshot
+			from ..snapshots import Snapshot
 			transfer_information = Snapshot.unpack_informational_frame(frame)
 
 			if transfer_information['transfer_id'] not in self.transfers:
@@ -112,7 +112,7 @@ class Reciever:
 					'data' : []
 				}
 		elif frame[0] == 1:
-			from .. import Delta
+			from ..snapshots import Delta
 			# Informational frame for a snapshot delta recieved (always starts with 1)
 			transfer_information = Delta.unpack_informational_frame(frame)
 
