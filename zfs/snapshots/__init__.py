@@ -49,7 +49,7 @@ class Snapshot:
 		if len(frame[end_frame:]):
 			raise ValueError(f"Recieved to many bytes in informational frame: {len(frame[end_frame:])} bytes to many")
 
-		if crc32_info != zlib.crc32(namespace + destination_name) & 0xffffffff:
+		if crc32_info != zlib.crc32(namespace) & 0xffffffff:
 			raise ValueError(f"CRC32 does not match in the informational frame, most likely corrupt data.")
 
 		return {
