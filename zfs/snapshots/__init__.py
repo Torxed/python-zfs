@@ -42,5 +42,4 @@ class DeltaReader:
 		if not self.worker:
 			self.worker = Popen(["zfs", "recv", frame['information']['destination_name']], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
-		print(str(frame['data'])[:50])
-		self.worker.stdin.write(frame['data'])
+		self.worker.stdin.write(frame['data']['data'])
