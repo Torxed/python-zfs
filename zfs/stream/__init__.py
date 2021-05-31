@@ -56,10 +56,10 @@ def info_struct(frame, transfer_id):
 	destination = bytes(frame.destination, 'UTF-8')
 	return (
 		struct.pack('B', 0)
-		struct.pack('B', transfer_id)
-		struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
-		struct.pack('B', len(origin)) + origin
-		struct.pack('B', len(destination)) + destination
+		+struct.pack('B', transfer_id)
+		+struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
+		+struct.pack('B', len(origin)) + origin
+		+struct.pack('B', len(destination)) + destination
 	)
 
 def deliver(stream, to, on_send=None, resend_buffer=2):
