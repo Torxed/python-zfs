@@ -1,3 +1,4 @@
+import abc
 import select
 import struct
 import zlib
@@ -36,6 +37,27 @@ class Snapshot:
 			+struct.pack('B', len(self.namespace)) + self.namespace
 		)
 
+	@abstractmethod
+	def unpack_informational_frame(frame):
+		frame_type = struct.unpack('B', frame[0:1])[0] # 1 Byte
+		transfer_id = struct.unpack('B', frame[1:2])[0] # 1 Byte
+		crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
+		namespace_length = struct.unpack('B', frame[6:7])[0] # Length of the snapshot origin name
+		namespace = frame[7:7+namespace_length]
+		end_frame = 7+namespace_length+1
+
+		if len(frame[end_frame:]):
+			raise ValueError(f"Recieved to many bytes in informational frame: {len(frame[end_frame:])} bytes to many")
+
+		if crc32_info != zlib.crc32(namespace + destination_name) & 0xffffffff:
+			raise ValueError(f"CRC32 does not match in the informational frame, most likely corrupt data.")
+
+		return {
+			"frame_type" : frame_type,
+			"transfer_id" : transfer_id,
+			"namespace" : namespace.decode('UTF-8')
+		}
+
 class Delta:
 	def __init__(self, origin, destination):
 		self.origin = origin
@@ -71,6 +93,30 @@ class Delta:
 			+struct.pack('B', len(origin)) + origin
 			+struct.pack('B', len(destination)) + destination
 		)
+
+	@abstractmethod
+	def unpack_informational_frame(frame):
+		frame_type = struct.unpack('B', frame[0:1])[0] # 1 Byte
+		transfer_id = struct.unpack('B', frame[1:2])[0] # 1 Byte
+		crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
+		origin_name_length = struct.unpack('B', frame[6:7])[0] # Length of the snapshot origin name
+		origin_name = frame[7:7+origin_name_length]
+		destination_name_length = struct.unpack('B', frame[7+origin_name_length:7+origin_name_length+1])[0]
+		destination_name = frame[7+origin_name_length+1:7+origin_name_length+1+destination_name_length]
+		end_frame = 7+origin_name_length+1+destination_name_length
+
+		if len(frame[end_frame:]):
+			raise ValueError(f"Recieved to many bytes in informational frame: {len(frame[end_frame:])} bytes to many")
+
+		if crc32_info != zlib.crc32(origin_name + destination_name) & 0xffffffff:
+			raise ValueError(f"CRC32 does not match in the informational frame, most likely corrupt data.")
+
+		return {
+			"frame_type" : frame_type,
+			"transfer_id" : transfer_id,
+			"origin_name" : origin_name.decode('UTF-8'),
+			"destination_name" : destination_name.decode('UTF-8')
+		}
 
 class DeltaReader:
 	def __init__(self):
