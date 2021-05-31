@@ -40,6 +40,7 @@ class Snapshot:
 
 	@abstractmethod
 	def unpack_informational_frame(frame):
+		print('Len info frame:', len(frame))
 		frame_type = struct.unpack('B', frame[0:1])[0] # 1 Byte
 		transfer_id = struct.unpack('B', frame[1:2])[0] # 1 Byte
 		crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
@@ -98,6 +99,7 @@ class Delta:
 
 	@abstractmethod
 	def unpack_informational_frame(frame):
+		print('Len info frame:', len(frame))
 		frame_type = struct.unpack('B', frame[0:1])[0] # 1 Byte
 		transfer_id = struct.unpack('B', frame[1:2])[0] # 1 Byte
 		crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
