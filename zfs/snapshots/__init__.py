@@ -1,6 +1,30 @@
 import select
 from subprocess import Popen, PIPE, STDOUT
 
+class Snapshot:
+	def __init__(self, namespace):
+		self.namespace = namespace
+		self.worker = None
+
+	def __enter__(self):
+		self.worker = Popen(["zfs", "send", "-c", self.namespace], shell=False, stdout=PIPE, stderr=PIPE)
+		return self
+
+	def __exit__(self, *args):
+		if args[0]:
+			print(args)
+
+		if self.worker:
+			self.worker.stdout.close()
+			self.worker.stderr.close()
+
+	def is_alive(self):
+		return self.worker.poll() is None
+
+	def read(self, buf_len=692):
+		if self.is_alive():
+			return self.worker.stdout.read(buf_len)
+
 class Delta:
 	def __init__(self, origin, destination):
 		self.origin = origin
