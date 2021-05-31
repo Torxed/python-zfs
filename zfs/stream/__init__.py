@@ -34,7 +34,7 @@ def unpack_informational_frame(frame):
 	crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
 	origin_name_length = struct.unpack('B', frame[6:7])[0] # Length of the snapshot origin name
 	origin_name = frame[7:7+origin_name_length]
-	destination_name_length = frame[7+origin_name_length:7+origin_name_length+1]
+	destination_name_length = struct.unpack('B', frame[7+origin_name_length:7+origin_name_length+1])[0]
 	destination_name = frame[7+origin_name_length+1:7+origin_name_length+1+destination_name_length]
 	end_frame = 7+origin_name_length+1+destination_name_length
 
