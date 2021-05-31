@@ -22,8 +22,9 @@ import zfs.list
 import zfs.snapshots
 import zfs.stream
 
+snapshot = zfs.snapshots.DeltaReader(delivery)
+
 with zfs.stream.Reciever(addr='', port=1337) as stream:
-	for delivery in stream:
-		snapshot = zfs.snapshots.DeltaReader(delivery)
-		print(snapshot)
+	for zfs_snapshot_chunk in stream:
+		snapshot.restore(zfs_snapshot_chunk)
 ```
