@@ -17,15 +17,18 @@ def structure_data(transfer_id, index, previous_data=None, data=None):
 	)
 
 def unpack_snapshot_frame(frame):
-	length = struct.unpack('H', frame[6:8])[0]
-	data_position = length+8
+	HEADER_LENGTH = 8
+
+	length = struct.unpack('H', frame[6:HEADER_LENGTH])[0]
+	data_position = length # The header is 8 bytes
+	
 	return {
 		"transfer_id" : struct.unpack('B', frame[0:1])[0],
 		"index" : struct.unpack('B', frame[1:2])[0],
 		"crc_data" : struct.unpack('I', frame[2:6])[0],
 		"data_len" : length,
-		"data" : frame[8:data_position],
-		"previous_data" : frame[data_position:]
+		"data" : frame[HEADER_LENGTH:HEADER_LENGTH+data_position],
+		"previous_data" : frame[HEADER_LENGTH+data_position:]
 	}
 
 def unpack_informational_frame(frame):
@@ -78,6 +81,7 @@ def deliver(stream, to, on_send=None, resend_buffer=2):
 		sender.sendto(stream_information, to)
 
 	while (data := stream.read(1392)):
+		print(f'Sending frame length: {len(data)}')
 		frame = structure_data(transfer_id, frame_index, previous_data, data)
 
 		if on_send:
