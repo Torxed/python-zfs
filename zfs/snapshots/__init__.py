@@ -42,4 +42,6 @@ class DeltaReader:
 		if not self.worker:
 			self.worker = Popen(["zfs", "recv", frame['information']['destination_name']], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
+		print(f"Restoring: {frame['data']['data'][:50]}")
 		self.worker.stdin.write(frame['data']['data'])
+		self.worker.stdin.flush()
