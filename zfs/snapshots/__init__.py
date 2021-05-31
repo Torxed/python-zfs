@@ -14,7 +14,6 @@ class Delta:
 		print(args)
 		if self.worker:
 			self.worker.stdout.close()
-			self.worker.stdin.close()
 			self.worker.stderr.close()
 
 	def is_alive(self):
@@ -42,5 +41,5 @@ class DeltaReader:
 	def restore(self, frame):
 		if not self.worker:
 			self.worker = Popen(["zfs", "recv", frame['information']['destination_name']], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
-			
-		self.worker.write(frame['data'])
+
+		self.worker.stdin.write(frame['data'])
