@@ -1,3 +1,4 @@
+import select
 from subprocess import Popen, PIPE, STDOUT
 
 class Delta:
