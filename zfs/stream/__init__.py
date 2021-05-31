@@ -50,8 +50,8 @@ def unpack_informational_frame(frame):
 	return {
 		"frame_type" : frame_type,
 		"transfer_id" : transfer_id,
-		"origin_name" : origin_name,
-		"destination_name" : destination_name
+		"origin_name" : origin_name.decode('UTF-8'),
+		"destination_name" : destination_name.decode('UTF-8')
 	}
 
 def info_struct(frame, transfer_id):
