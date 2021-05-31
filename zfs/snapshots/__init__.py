@@ -7,6 +7,6 @@ class Delta:
 	def is_alive(self):
 		return self.worker.poll() is None
 
-	def read(self, buf_len=1024):
+	def read(self, buf_len=692):
 		if self.is_alive():
 			return self.worker.stdout.read(buf_len)
