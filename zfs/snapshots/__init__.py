@@ -1,7 +1,7 @@
-import abc
 import select
 import struct
 import zlib
+from abc import abstractmethod
 from subprocess import Popen, PIPE, STDOUT
 
 class Snapshot:
