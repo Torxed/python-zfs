@@ -27,7 +27,6 @@ class Snapshot:
 
 	def info_struct(self, transfer_id):
 		self.namespace = bytes(self.namespace, 'UTF-8')
-		destination = bytes(self.destination, 'UTF-8')
 		return (
 			struct.pack('B', 0)
 			+struct.pack('B', transfer_id)
