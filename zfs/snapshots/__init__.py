@@ -25,6 +25,16 @@ class Snapshot:
 		if self.is_alive():
 			return self.worker.stdout.read(buf_len)
 
+	def info_struct(self, transfer_id):
+		self.namespace = bytes(self.self.namespace, 'UTF-8')
+		destination = bytes(self.destination, 'UTF-8')
+		return (
+			struct.pack('B', 0)
+			+struct.pack('B', transfer_id)
+			+struct.pack('I', zlib.crc32(self.namespace) & 0xffffffff)
+			+struct.pack('B', len(self.namespace)) + self.namespace
+		)
+
 class Delta:
 	def __init__(self, origin, destination):
 		self.origin = origin
@@ -49,6 +59,17 @@ class Delta:
 	def read(self, buf_len=692):
 		if self.is_alive():
 			return self.worker.stdout.read(buf_len)
+
+	def info_struct(self, transfer_id):
+		origin = bytes(self.origin, 'UTF-8')
+		destination = bytes(self.destination, 'UTF-8')
+		return (
+			struct.pack('B', 1)
+			+struct.pack('B', transfer_id)
+			+struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
+			+struct.pack('B', len(origin)) + origin
+			+struct.pack('B', len(destination)) + destination
+		)
 
 class DeltaReader:
 	def __init__(self):

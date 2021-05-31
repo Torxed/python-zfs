@@ -54,17 +54,6 @@ def unpack_informational_frame(frame):
 		"destination_name" : destination_name.decode('UTF-8')
 	}
 
-def info_struct(frame, transfer_id):
-	origin = bytes(frame.origin, 'UTF-8')
-	destination = bytes(frame.destination, 'UTF-8')
-	return (
-		struct.pack('B', 0)
-		+struct.pack('B', transfer_id)
-		+struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
-		+struct.pack('B', len(origin)) + origin
-		+struct.pack('B', len(destination)) + destination
-	)
-
 def deliver(stream, to, on_send=None, resend_buffer=2):
 	assert len(to) == 2 # IP, port
 	assert type(to[0]) is str and type(to[1]) is int
@@ -76,7 +65,7 @@ def deliver(stream, to, on_send=None, resend_buffer=2):
 	frame_index = 0
 	previous_data = None
 
-	stream_information = info_struct(stream, transfer_id)
+	stream_information = stream.info_struct(transfer_id)
 	for resend in range(resend_buffer):
 		sender.sendto(stream_information, to)
 
@@ -135,16 +124,28 @@ class Reciever:
 
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
-			# Informational frame recieved (always starts with 0)
+			# Informational frame for a snapshot (not delta) recieved (always starts with 0)
 			transfer_information = unpack_informational_frame(frame)
 
 			if transfer_information['transfer_id'] not in self.transfers:
 				self.transfers[transfer_information['transfer_id']] = {
 					'information' :transfer_information,
+					'snapshot' : 'origin',
 					'data' : []
 				}
-		else:
-			# We recieved a snapshot frame (first byte was not 0, which means it's a transfer ID)
+		elif frame[0] == 1:
+			# Informational frame for a snapshot delta recieved (always starts with 1)
+			transfer_information = unpack_informational_frame(frame)
+
+			if transfer_information['transfer_id'] not in self.transfers:
+				self.transfers[transfer_information['transfer_id']] = {
+					'information' :transfer_information,
+					'snapshot' : 'delta',
+					'data' : []
+				}
+
+		elif frame[0] == 2:
+			# We recieved a snapshot stream frame (first byte was 2)
 			data = unpack_snapshot_frame(frame)
 
 			if zlib.crc32(data['data']) & 0xffffffff != data['crc_data']:
@@ -156,4 +157,3 @@ class Reciever:
 			self.transfers[data['transfer_id']]['data'].append(data)
 
 			return data['transfer_id']
-
