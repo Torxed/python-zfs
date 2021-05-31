@@ -1,5 +1,6 @@
 import select
 import struct
+import zlib
 from subprocess import Popen, PIPE, STDOUT
 
 class Snapshot:
