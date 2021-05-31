@@ -7,7 +7,8 @@ class Delta:
 		self.worker = None
 
 	def __enter__(self):
-		self.worker = Popen(["zfs", "send", "-c", "-I", origin, destination], shell=False, stdout=PIPE, stderr=PIPE)
+		self.worker = Popen(["zfs", "send", "-c", "-I", self.origin, self.destination], shell=False, stdout=PIPE, stderr=PIPE)
+		return self
 
 	def __exit__(self, *args):
 		print(args)
@@ -29,7 +30,7 @@ class DeltaReader:
 		self.transfer_id = None
 
 	def __enter__(self):
-		self.worker = Popen(["zfs", "recv", frame['information']['destination_name']], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+		return self
 
 	def __exit__(self, *args):
 		print(args)
@@ -39,4 +40,7 @@ class DeltaReader:
 			self.worker.stderr.close()
 
 	def restore(self, frame):
+		if not self.worker:
+			self.worker = Popen(["zfs", "recv", frame['information']['destination_name']], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+			
 		self.worker.write(frame['data'])
