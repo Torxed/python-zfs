@@ -26,7 +26,7 @@ class Snapshot:
 			return self.worker.stdout.read(buf_len)
 
 	def info_struct(self, transfer_id):
-		self.namespace = bytes(self.self.namespace, 'UTF-8')
+		self.namespace = bytes(self.namespace, 'UTF-8')
 		destination = bytes(self.destination, 'UTF-8')
 		return (
 			struct.pack('B', 0)
