@@ -11,7 +11,9 @@ class Delta:
 		return self
 
 	def __exit__(self, *args):
-		print(args)
+		if args[0]:
+			print(args)
+			
 		if self.worker:
 			self.worker.stdout.close()
 			self.worker.stderr.close()
@@ -32,7 +34,9 @@ class DeltaReader:
 		return self
 
 	def __exit__(self, *args):
-		print(args)
+		if args[0]:
+			print(args)
+
 		if self.worker:
 			self.worker.stdout.close()
 			self.worker.stdin.close()
