@@ -13,7 +13,7 @@ class Delta:
 	def __exit__(self, *args):
 		if args[0]:
 			print(args)
-			
+
 		if self.worker:
 			self.worker.stdout.close()
 			self.worker.stderr.close()
@@ -49,3 +49,6 @@ class DeltaReader:
 		print(f"Restoring: {frame['data']['data'][:50]}")
 		self.worker.stdin.write(frame['data']['data'])
 		self.worker.stdin.flush()
+
+		if [for fileno in select.select([self.worker.stderr.fileno()], [], [], 0.2)]:
+			raise ValueError(self.worker.stderr.read(1024))
