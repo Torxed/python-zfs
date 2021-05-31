@@ -35,6 +35,7 @@ class Snapshot:
 			+struct.pack('B', transfer_id)
 			+struct.pack('I', zlib.crc32(self.namespace) & 0xffffffff)
 			+struct.pack('B', len(self.namespace)) + self.namespace
+			+b'\x00'*(1392-7-len(self.namespace))
 		)
 
 	@abstractmethod
@@ -46,11 +47,11 @@ class Snapshot:
 		namespace = frame[7:7+namespace_length]
 		end_frame = 7+namespace_length+1
 
-		if len(frame[end_frame:]):
-			raise ValueError(f"Recieved to many bytes in informational frame: {len(frame[end_frame:])} bytes to many")
+		if len(frame[end_frame:].strip(b'\x00')):
+			raise ValueError(f"Received too many bytes in informational frame: {len(frame[end_frame:])} bytes too many")
 
 		if crc32_info != zlib.crc32(namespace) & 0xffffffff:
-			raise ValueError(f"CRC32 does not match in the informational frame, most likely corrupt data.")
+			raise ValueError(f"CRC32 does not match in the Snapshot informational frame, most likely corrupt data.")
 
 		return {
 			"frame_type" : frame_type,
@@ -92,6 +93,7 @@ class Delta:
 			+struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
 			+struct.pack('B', len(origin)) + origin
 			+struct.pack('B', len(destination)) + destination
+			+b'\x00'*(1392-8-len(origin)-len(destination))
 		)
 
 	@abstractmethod
@@ -105,8 +107,8 @@ class Delta:
 		destination_name = frame[7+origin_name_length+1:7+origin_name_length+1+destination_name_length]
 		end_frame = 7+origin_name_length+1+destination_name_length
 
-		if len(frame[end_frame:]):
-			raise ValueError(f"Recieved to many bytes in informational frame: {len(frame[end_frame:])} bytes to many")
+		if len(frame[end_frame:].strip(b'\x00')):
+			raise ValueError(f"Received too many bytes in Delta informational frame: {len(frame[end_frame:])} bytes too many")
 
 		if crc32_info != zlib.crc32(origin_name + destination_name) & 0xffffffff:
 			raise ValueError(f"CRC32 does not match in the informational frame, most likely corrupt data.")
