@@ -80,7 +80,7 @@ def deliver(stream, to, on_send=None, resend_buffer=2):
 	for resend in range(resend_buffer):
 		sender.sendto(stream_information, to)
 
-	while (data := stream.read(1392)):
+	while (data := stream.read(692)):
 		print(f'Sending frame length: {len(data)}')
 		frame = structure_data(transfer_id, frame_index, previous_data, data)
 
