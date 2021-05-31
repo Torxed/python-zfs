@@ -50,5 +50,5 @@ class DeltaReader:
 		self.worker.stdin.write(frame['data']['data'])
 		self.worker.stdin.flush()
 
-		if [for fileno in select.select([self.worker.stderr.fileno()], [], [], 0.2)]:
+		if [fileno for fileno in select.select([self.worker.stderr.fileno()], [], [], 0.2)]:
 			raise ValueError(self.worker.stderr.read(1024))
