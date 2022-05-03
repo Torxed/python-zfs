@@ -4,6 +4,8 @@ import zlib
 from abc import abstractmethod
 from subprocess import Popen, PIPE, STDOUT
 
+from ..models import Snapshot
+
 class Snapshot:
 	def __init__(self, namespace):
 		self.namespace = namespace
@@ -61,13 +63,13 @@ class Snapshot:
 		}
 
 class Delta:
-	def __init__(self, origin, destination):
+	def __init__(self, origin :Snapshot, destination :Snapshot):
 		self.origin = origin
 		self.destination = destination
 		self.worker = None
 
 	def __enter__(self):
-		self.worker = Popen(["zfs", "send", "-c", "-I", self.origin, self.destination], shell=False, stdout=PIPE, stderr=PIPE)
+		self.worker = Popen(["zfs", "send", "-c", "-I", self.origin.name, self.destination.name], shell=False, stdout=PIPE, stderr=PIPE)
 		return self
 
 	def __exit__(self, *args):
@@ -86,8 +88,8 @@ class Delta:
 			return self.worker.stdout.read(buf_len)
 
 	def info_struct(self, transfer_id):
-		origin = bytes(self.origin, 'UTF-8')
-		destination = bytes(self.destination, 'UTF-8')
+		origin = bytes(self.origin.name, 'UTF-8')
+		destination = bytes(self.destination.name, 'UTF-8')
 		return (
 			struct.pack('B', 1)
 			+struct.pack('B', transfer_id)
