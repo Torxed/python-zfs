@@ -1,20 +1,53 @@
+from typing import Iterator
+
 from .. import SysCommandWorker
+from ..models import (
+	Namespace,
+	Snapshot,
+	Volume
+)
 
 def snapshots():
 	worker = SysCommandWorker('zfs list -H -t snapshot')
 	while worker.is_alive():
 		for line in worker:
-			name, used, avail, refer, mountpoint = line.split(b'\t')
-			yield {
+			name, used, avail, refer, mountpoint = line.strip(b'\r\n').decode('UTF-8').split('\t')
+			yield Snapshot(**{
 				"name": name,
-				"used": used,
-				"avail": avail,
-				"refer": refer,
-				"mountpoint": mountpoint
-			}
+				"used": used if used != b'-' else None,
+				"avail": avail if avail != b'-' else None,
+				"refer": refer if refer != b'-' else None,
+				"mountpoint": mountpoint if mountpoint != b'-' else None
+			})
 
-def snapshot():
-	return {snap['name'].decode('UTF-8') : {**{k: v.decode('UTF-8') for k, v in snap.items()}} for snap in snapshots()}
+def last_snapshots(namespace :Namespace, n :int = 2):
+	"""
+	Slightly slower function to iterate snapshots() because
+	it will reverse the order of the snapshots, and since it's
+	a line-fed list we have to iterate over each line.
+	"""
+	if type(namespace) != Namespace:
+		raise AssertionError(f"last_snapshots(namespace, [n=2]) requires a zfs.Namespace() models to be given as first parameter.")
+	
+	all_snapshots = list(reversed([snapshot for snapshot in snapshots() if snapshot.name.startswith(namespace.name)]))
 
-def last_snapshots(namespace, n=2):
-	return [key for key in snapshot().keys() if namespace in key][0-n:]
+	return all_snapshots[:n]
+
+def volumes() -> Iterator[Volume]:
+	worker = SysCommandWorker('zfs list -H')
+	while worker.is_alive():
+		for line in worker:
+			name, used, avail, refer, mountpoint = line.strip(b'\r\n').decode('UTF-8').split('\t')
+			
+			yield Volume(**{
+				"name": name,
+				"used": used if used != b'-' else None,
+				"avail": avail if avail != b'-' else None,
+				"refer": refer if refer != b'-' else None,
+				"mountpoint": mountpoint if mountpoint != b'-' else None
+			})
+
+def get_volume(name :str) -> Volume:
+	for volume in volumes():
+		if volume.name.startswith(name):
+			return volume
