@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import select
+import re
 from datetime import datetime, date
 from typing import Union, List, Optional, Dict, Any, Iterator, Callable
 from .storage import storage
@@ -40,6 +41,19 @@ class epoll():
 
 class SysCallError(BaseException):
 	pass
+
+
+def clear_vt100_escape_codes(data :Union[bytes, str]):
+	# https://stackoverflow.com/a/43627833/929999
+	if type(data) == bytes:
+		vt100_escape_regex = bytes(r'\x1B\[[?0-9;]*[a-zA-Z]', 'UTF-8')
+	else:
+		vt100_escape_regex = r'\x1B\[[?0-9;]*[a-zA-Z]'
+
+	for match in re.findall(vt100_escape_regex, data, re.IGNORECASE):
+		data = data.replace(match, '' if type(data) == str else b'')
+
+	return data
 
 def locate_binary(name):
 	for PATH in os.environ['PATH'].split(':'):
