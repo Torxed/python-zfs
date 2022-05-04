@@ -3,3 +3,7 @@ from .snapshots import (
 	Namespace,
 	Volume
 )
+from .transmissions import (
+	ZFSFrame,
+	ZFSSnapshotChunk
+)
