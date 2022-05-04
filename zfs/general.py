@@ -80,7 +80,7 @@ class SysCommandWorker:
 		self.callbacks = callbacks
 		self.peak_output = peak_output
 		# define the standard locale for command outputs. For now the C ascii one. Can be overriden
-		self.environment_vars = {**storage['arguments'].locale,**environment_vars}
+		self.environment_vars = {'LC_ALL' : storage['arguments'].locale, **environment_vars}
 		self.logfile = logfile
 		self.working_directory = working_directory
 

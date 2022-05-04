@@ -9,7 +9,7 @@ __version__ = '0.0.1.dev1'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--verbosity-level", default='DEBUG', type=str, nargs='?', help="Sets the lowest threashold for log messages, according to https://docs.python.org/3/library/logging.html#logging-levels")
-parser.add_argument("--locale", default="UTF-8", type=str, nargs="?", help="Sets the locale of subshells executed.")
+parser.add_argument("--locale", default="C", type=str, nargs="?", help="Sets the locale of subshells executed.")
 parser.add_argument("--log-dir", default=pathlib.Path("./").resolve(), type=pathlib.Path, nargs="?", help="Sets the destination of where to save logs.")
 parser.add_argument("--debug", default=False, action="store_true", help="Turns on debugging output.")
 
