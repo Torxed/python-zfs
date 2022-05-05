@@ -52,7 +52,6 @@ def clear_vt100_escape_codes(data :Union[bytes, str]):
 
 
 	for match in re.findall(vt100_escape_regex, data, re.IGNORECASE):
-		print(f'Found a match:', match)
 		data = data.replace(match, '' if type(data) == str else b'')
 
 	return data
@@ -122,6 +121,7 @@ class SysCommandWorker:
 		return contains
 
 	def __iter__(self, *args :str, **kwargs :Dict[str, Any]) -> Iterator[bytes]:
+		print('Iterating traceback:', self._trace_log)
 		for line in self._trace_log[self._trace_log_pos:self._trace_log.rfind(b'\n')].split(b'\n'):
 			if line:
 				if self.remove_vt100_escape_codes_from_lines:
