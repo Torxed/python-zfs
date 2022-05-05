@@ -2,6 +2,7 @@ import ipaddress
 import ctypes
 import socket
 import fcntl
+import zlib
 from ..models import Ethernet, IPv4, UDP, ZFSFrame
 from ..storage import storage
 
