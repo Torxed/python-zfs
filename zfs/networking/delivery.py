@@ -72,6 +72,9 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 	promisciousMode = promisc(transmission_socket, bytes(storage['arguments'].interface, 'UTF-8'))
 	promisciousMode.on()
 
+	data, auxillary_data_raw, flags, addr = socket.recvmsg(65535, socket.CMSG_LEN(4096))
+	print(data, auxillary_data_raw, flags, addr)
+
 	frame_index = 0
 	previous_data = None
 
