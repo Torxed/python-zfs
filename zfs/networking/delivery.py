@@ -2,7 +2,7 @@ import ipaddress
 import ctypes
 import socket
 import fcntl
-from ..models import Ethernet, IPv4, UDP
+from ..models import Ethernet, IPv4, UDP, ZFSFrame
 from ..storage import storage
 
 # ethernet_segments = struct.unpack("!6s6s2s", data[0:14])
