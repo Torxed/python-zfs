@@ -72,15 +72,15 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 	promisciousMode = promisc(transmission_socket, bytes(storage['arguments'].interface, 'UTF-8'))
 	promisciousMode.on()
 
-	data, auxillary_data_raw, flags, addr = transmission_socket.recvmsg(65535, socket.CMSG_LEN(4096))
-	print(data, auxillary_data_raw, flags, addr)
+	aux_data = [(263, 8, b'\x01\x00\x00\x00<\x00\x00\x00<\x00\x00\x00\x00\x00\x0e\x00\x00\x00\x00\x00')]
+	flags = 0
 
 	frame_index = 0
 	previous_data = None
 
 	stream_information = stream.info_struct(transfer_id)
 	for resend in range(resend_buffer):
-		transmission_socket.sendto(stream_information, (storage['arguments'].interface, addressing.udp_port))
+		transmission_socket.sendmsg([stream_information], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
 
 	while (data := stream.read(692)):
 		# transfer_id :int # B
@@ -115,7 +115,8 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 
 		# socket.sendto(frame.pack(), addressing.destination.ipv4_address)
 		# socket.sendmsg(frame.pack(), response.frame.request_frame.auxillary_data_raw, response.frame.request_frame.flags, (response.frame.request_frame.server.configuration.interface, 68))
-		transmission_socket.sendmsg([frame.pack()], (storage['arguments'].interface, addressing.udp_port))
+
+		transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
 		
 		previous_data = data
 		frame_index += 1
