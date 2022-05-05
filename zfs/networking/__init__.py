@@ -32,46 +32,6 @@ def unpack_snapshot_frame(frame):
 		"previous_data" : frame[HEADER_LENGTH+data_position:]
 	}
 
-def deliver(stream, to, on_send=None, resend_buffer=2):
-	assert len(to) == 2 # IP, port
-	assert type(to[0]) is str and type(to[1]) is int
-	assert ipaddress.ip_address(to[0])
-
-	sender = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
-	transfer_id = 1
-	frame_index = 0
-	previous_data = None
-
-	stream_information = stream.info_struct(transfer_id)
-	for resend in range(resend_buffer):
-		sender.sendto(stream_information, to)
-
-	while (data := stream.read(692)):
-		transfer_id :int # B
-		frame_index :int # B
-		checksum :int # I
-		length :int # H
-		data :bytes
-		previous_checksum :int # I
-
-		frame = ZFSFrame(
-			transfer_id = transfer_id,
-			frame_index = frame_index,
-			data = data,
-			previous_checksum = zlib.crc32(previous_data if previous_data else b'')
-		)
-		#frame = structure_data(transfer_id, frame_index, previous_data, data)
-		print(f'Sending frame: {repr(frame)}')
-
-		if on_send:
-			frame = on_send(frame)
-
-		sender.sendto(frame.pack(), to)
-		
-		previous_data = data
-		frame_index += 1
-
 class Reciever:
 	def __init__(self, addr, port, buffer_size=1392):
 		self.addr = addr

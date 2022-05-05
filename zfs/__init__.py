@@ -8,6 +8,8 @@ from .logger import log
 __version__ = '0.0.1.dev1'
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--interface", type=str, nargs="?", help="Which interface should we send the ZFS stream on.")
+# parser.add_argument("--src-ip", default=None, type=str, nargs="?", help="Which source IP should we be sending as (default will autodetect --interface first IP).")
 parser.add_argument("--verbosity-level", default='DEBUG', type=str, nargs='?', help="Sets the lowest threashold for log messages, according to https://docs.python.org/3/library/logging.html#logging-levels")
 parser.add_argument("--locale", default="C", type=str, nargs="?", help="Sets the locale of subshells executed.")
 parser.add_argument("--log-dir", default=pathlib.Path("./").resolve(), type=pathlib.Path, nargs="?", help="Sets the destination of where to save logs.")
