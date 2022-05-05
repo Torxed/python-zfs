@@ -50,7 +50,9 @@ def clear_vt100_escape_codes(data :Union[bytes, str]):
 	else:
 		vt100_escape_regex = r'\x1B\[[?0-9;]*[a-zA-Z]'
 
+
 	for match in re.findall(vt100_escape_regex, data, re.IGNORECASE):
+		print(f'Found a match:', match)
 		data = data.replace(match, '' if type(data) == str else b'')
 
 	return data
