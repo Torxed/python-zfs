@@ -98,10 +98,10 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 			source=str(addressing.source.mac_address),
 			destination=str(addressing.destination.mac_address),
 			payload_type=8,
-			payload = zfs.IPv4(
+			payload = IPv4(
 				source=addressing.source.ipv4_address,
 				destination=addressing.destination.ipv4_address,
-				payload=zfs.UDP(destination=addressing.udp_port, payload=payload.pack())
+				payload=UDP(destination=addressing.udp_port, payload=payload.pack())
 			)
 		)
 
