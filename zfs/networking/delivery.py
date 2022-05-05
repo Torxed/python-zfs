@@ -112,7 +112,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 
 		# socket.sendto(frame.pack(), addressing.destination.ipv4_address)
 		# socket.sendmsg(frame.pack(), response.frame.request_frame.auxillary_data_raw, response.frame.request_frame.flags, (response.frame.request_frame.server.configuration.interface, 68))
-		transmission_socket.sendmsg(frame.pack(), (storage['arguments'].interface, addressing.udp_port))
+		transmission_socket.sendmsg([frame.pack()], (storage['arguments'].interface, addressing.udp_port))
 		
 		previous_data = data
 		frame_index += 1
