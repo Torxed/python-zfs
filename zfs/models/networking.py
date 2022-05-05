@@ -2,6 +2,7 @@ import pydantic
 import ipaddress
 import random
 import struct
+import socket
 from typing import Union, Type
 
 class Ethernet_IPv4:
