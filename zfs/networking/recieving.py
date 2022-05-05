@@ -3,10 +3,12 @@ import select
 import socket
 import struct
 import zlib
+import binascii
 
 from .. import epoll, EPOLLIN, EPOLLHUP
-from ..models import ZFSFrame, ZFSSnapshotChunk
-from .common import promisc
+from ..models import ZFSFrame, ZFSSnapshotChunk, Ethernet, IPv4, UDP
+from ..storage import storage
+from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
 
 def unpack_snapshot_frame(frame):
 	HEADER_LENGTH = 8
@@ -35,36 +37,39 @@ class Reciever:
 		}
 
 	def __enter__(self):
-		# self.socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
-		# self.socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
-		# promisciousMode = promisc(self.socket, bytes(storage['arguments'].interface, 'UTF-8'))
-		# promisciousMode.on()
+		self.socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
+		self.socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
+		promisciousMode = promisc(self.socket, bytes(storage['arguments'].interface, 'UTF-8'))
+		promisciousMode.on()
 
-		self.socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-		self.socket.setblocking(0)
-		self.socket.bind((self.addr, self.port))
+		self.poller = epoll()
+		self.poller.register(self.socket.fileno(), EPOLLIN | EPOLLHUP)
+
+		# self.socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+		# self.socket.setblocking(0)
+		# self.socket.bind((self.addr, self.port))
 		return self
 
 	def __exit__(self, *args):
-		print(args)
+		if args[1]:
+			print(args)
 
 	def __iter__(self):
 		if self.socket:
-			poller = epoll()
-			poller.register(self.socket.fileno(), EPOLLIN | EPOLLHUP)
 
 			data_recieved = None
 			while data_recieved is None or data_recieved is True:
 				if data_recieved:
 					data_recieved = False
 	
-				for fileno, event in poller.poll(0.025): # Retry up to 1 second
-					# data, auxillary_data_raw, flags, addr = transmission_socket.recvmsg(65535, socket.CMSG_LEN(4096))
+				for fileno, event in self.poller.poll(0.025): # Retry up to 1 second
+					data, auxillary_data_raw, flags, addr = self.socket.recvmsg(65535, socket.CMSG_LEN(4096))
 					
-					data, sender = self.socket.recvfrom(self.buffer_size)
+					# data, sender = self.socket.recvfrom(self.buffer_size)
 					data_recieved = True
 
-					frame = self.unpack_frame(data)
+					for result in self.unpack_frame(data):
+						yield result
 
 					# transfer_id = self.recieve_frame(data, sender)
 					# if transfer_id:
@@ -74,31 +79,62 @@ class Reciever:
 					# 	}
 
 	def unpack_frame(self, data):
+		ip_segments = struct.unpack("!12s4s4s", data[14:34])
 
-		transfer_id = struct.unpack('B', data[0:1])[0]
-		frame_index = struct.unpack('B', data[1:2])[0]
-		checksum = struct.unpack('I', data[2:6])[0]
-		length = struct.unpack('H', data[6:8])[0]
-		recieved_data = data[8:8+length]
-		
-		print(len(data), data)
-		print(data[0:1], transfer_id)
-		print(data[1:2], frame_index)
-		print(data[2:6], checksum)
-		print(data[6:8], length)
-		print('DATA:', data[8:8+length])
-		print(data[8+length:8+length+4])
+		ip_source, ip_dest = [
+			ipaddress.ip_address(x) for x in (
+				socket.inet_ntoa(section) for section in ip_segments[1:3]
+			)
+		]
 
-		previous_checksum = struct.unpack('I', data[8+length:8+length+4])[0]
+		source_port, destination_port, udp_payload_len, udp_checksum = struct.unpack("!HHHH", data[34:42])
 
-		return ZFSSnapshotChunk(
-			transfer_id = transfer_id,
-			frame_index = frame_index,
-			checksum = checksum,
-			length = length,
-			data = recieved_data,
-			previous_checksum = previous_checksum
+		ethernet_segments = struct.unpack("!6s6s2s", data[0:14])
+		mac_dest, mac_source = (binascii.hexlify(mac) for mac in ethernet_segments[:2])
+		frame = Ethernet(
+			source=':'.join(mac_source[i:i+2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
+			destination=':'.join(mac_dest[i:i+2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
+			payload_type=binascii.hexlify(ethernet_segments[2]),
+			payload=IPv4(
+				source=ip_source,
+				destination=ip_dest,
+				payload=UDP(
+					source=source_port,
+					destination=destination_port,
+					length=udp_payload_len,
+					checksum=udp_checksum,
+					payload=data[42:42+udp_payload_len]
+				)
+			)
 		)
+
+		if frame.payload.payload.destination == self.port and (self.addr == '' or self.addr == frame.payload.destination):
+			data = frame.payload.payload.payload
+
+			transfer_id = struct.unpack('B', data[0:1])[0]
+			frame_index = struct.unpack('B', data[1:2])[0]
+			checksum = struct.unpack('I', data[2:6])[0]
+			length = struct.unpack('H', data[6:8])[0]
+			recieved_data = data[8:8+length]
+			
+			# print(len(data), data)
+			# print(data[0:1], transfer_id)
+			# print(data[1:2], frame_index)
+			# print(data[2:6], checksum)
+			# print(data[6:8], length)
+			# print('DATA:', data[8:8+length])
+			# print(data[8+length:8+length+4])
+
+			previous_checksum = struct.unpack('I', data[8+length:8+length+4])[0]
+
+			yield ZFSSnapshotChunk(
+				transfer_id = transfer_id,
+				frame_index = frame_index,
+				checksum = checksum,
+				length = length,
+				data = recieved_data,
+				previous_checksum = previous_checksum
+			)
 
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:

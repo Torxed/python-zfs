@@ -3,14 +3,11 @@ import socket
 import zlib
 from ..models import Ethernet, IPv4, UDP, ZFSFrame
 from ..storage import storage
-from .common import promisc
+from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
 
 
 def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 	# sender = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-	ETH_P_ALL = 0x0003
-	SOL_PACKET = 263
-	PACKET_AUXDATA = 8
 	transmission_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
 	transmission_socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
 	promisciousMode = promisc(transmission_socket, bytes(storage['arguments'].interface, 'UTF-8'))
@@ -48,7 +45,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 			payload = IPv4(
 				source=addressing.source.ipv4_address,
 				destination=addressing.destination.ipv4_address,
-				payload=UDP(destination=addressing.udp_port, payload=payload.pack(), source_addr=addressing.source.ipv4_address, dest_addr=addressing.destination.ipv4_address)
+				payload=UDP(destination=addressing.udp_port, payload=payload.pack()) #, source_addr=addressing.source.ipv4_address, dest_addr=addressing.destination.ipv4_address)
 			)
 		)
 

@@ -2,6 +2,10 @@ import ctypes
 import socket
 import fcntl
 
+ETH_P_ALL = 0x0003
+SOL_PACKET = 263
+PACKET_AUXDATA = 8
+
 class tpacket_auxdata(ctypes.Structure):
 	_fields_ = [
 		("tp_status", ctypes.c_uint),
