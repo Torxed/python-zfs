@@ -32,11 +32,12 @@ class UDP(pydantic.BaseModel):
 	destination :int
 	payload :bytes
 	source :int = random.randint(32768, 60999)
-	source_addr :ipaddress.IPv4Address
-	dest_addr :ipaddress.IPv4Address
+	checksum :int = 0
+	# source_addr :ipaddress.IPv4Address
+	# dest_addr :ipaddress.IPv4Address
 
 	@property
-	def checksum(self):
+	def _checksum(self):
 		# pseudo_header = struct.pack('!BBH', 0, socket.IPPROTO_UDP , len(self))
 		# pseudo_header = self.pack_address(self.source_addr) + self.pack_address(self.dest_addr) + pseudo_header
 
