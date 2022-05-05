@@ -65,9 +65,9 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 	ETH_P_ALL = 0x0003
 	SOL_PACKET = 263
 	PACKET_AUXDATA = 8
-	socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
-	socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
-	promisciousMode = promisc(socket, bytes(storage['arguments'].interface, 'UTF-8'))
+	transmission_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
+	transmission_socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
+	promisciousMode = promisc(transmission_socket, bytes(storage['arguments'].interface, 'UTF-8'))
 	promisciousMode.on()
 
 	frame_index = 0
@@ -75,7 +75,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 
 	stream_information = stream.info_struct(transfer_id)
 	for resend in range(resend_buffer):
-		socket.sendto(stream_information, addressing.destination.ipv4_address)
+		transmission_socket.sendto(stream_information, addressing.destination.ipv4_address)
 
 	while (data := stream.read(692)):
 		# transfer_id :int # B
@@ -110,7 +110,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 
 		# socket.sendto(frame.pack(), addressing.destination.ipv4_address)
 		# socket.sendmsg(frame.pack(), response.frame.request_frame.auxillary_data_raw, response.frame.request_frame.flags, (response.frame.request_frame.server.configuration.interface, 68))
-		socket.sendmsg(frame.pack(), (storage['arguments'].interface, addressing.udp_port))
+		transmission_socket.sendmsg(frame.pack(), (storage['arguments'].interface, addressing.udp_port))
 		
 		previous_data = data
 		frame_index += 1
