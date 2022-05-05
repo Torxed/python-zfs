@@ -6,6 +6,7 @@ import zlib
 
 from .. import epoll, EPOLLIN, EPOLLHUP
 from ..models import ZFSFrame, ZFSSnapshotChunk
+from .delivery import deliver
 
 # def structure_data(transfer_id, index, previous_data=None, data=None):
 # 	return (
