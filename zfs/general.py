@@ -121,7 +121,6 @@ class SysCommandWorker:
 		return contains
 
 	def __iter__(self, *args :str, **kwargs :Dict[str, Any]) -> Iterator[bytes]:
-		print('Iterating traceback:', self._trace_log)
 		for line in self._trace_log[self._trace_log_pos:self._trace_log.rfind(b'\n')].split(b'\n'):
 			if line:
 				if self.remove_vt100_escape_codes_from_lines:
@@ -232,6 +231,7 @@ class SysCommandWorker:
 						self.exit_code = os.waitpid(self.child_fd, 0)[1]
 					except ChildProcessError:
 						self.exit_code = 1
+		print(os.read(self.child_fd, 8192))
 
 	def execute(self) -> bool:
 		import pty
