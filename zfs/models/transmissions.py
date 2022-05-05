@@ -50,5 +50,4 @@ class ZFSSnapshotChunk(pydantic.BaseModel):
 
 	@pydantic.validator('*')
 	def checksum(cls, value):
-		print(value)
 		return value

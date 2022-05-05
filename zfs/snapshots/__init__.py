@@ -143,10 +143,10 @@ class DeltaReader:
 
 	def restore(self, frame):
 		if not self.worker:
-			self.worker = Popen(["zfs", "recv", frame['information']['destination_name']], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+			self.worker = Popen(["zfs", "recv", "pool/testsync"], shell=False, stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
-		print(f"Restoring: {frame['data']['data'][:50]}")
-		self.worker.stdin.write(frame['data']['data'])
+		print(f"Restoring: {frame.data}")
+		self.worker.stdin.write(frame.data)
 		self.worker.stdin.flush()
 
 		for fileno in select.select([self.worker.stdout.fileno()], [], [], 0.2)[0]:

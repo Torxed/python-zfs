@@ -91,6 +91,7 @@ class Reciever:
 
 		ethernet_segments = struct.unpack("!6s6s2s", data[0:14])
 		mac_dest, mac_source = (binascii.hexlify(mac) for mac in ethernet_segments[:2])
+		
 		frame = Ethernet(
 			source=':'.join(mac_source[i:i+2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
 			destination=':'.join(mac_dest[i:i+2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
