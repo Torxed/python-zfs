@@ -37,7 +37,7 @@ class UDP(pydantic.BaseModel):
 
 	@property
 	def checksum(self):
-		pseudo_header = struct.pack('!BBH', 0, socket.IPPROTO_UDP , self.length)
+		pseudo_header = struct.pack('!BBH', 0, socket.IPPROTO_UDP , len(self))
 		pseudo_header = self.pack_address(self.source_addr) + self.pack_address(self.dest_addr) + pseudo_header
 
 		udp_header = struct.pack('>H', self.source)
