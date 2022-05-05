@@ -231,7 +231,6 @@ class SysCommandWorker:
 						self.exit_code = os.waitpid(self.child_fd, 0)[1]
 					except ChildProcessError:
 						self.exit_code = 1
-		print(os.read(self.child_fd, 8192))
 
 	def execute(self) -> bool:
 		import pty
