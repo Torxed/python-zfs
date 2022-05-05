@@ -1,4 +1,5 @@
 import ipaddress
+import ctypes
 from ..models import Ethernet, IPv4, UDP
 from ..storage import storage
 
