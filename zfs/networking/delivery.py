@@ -76,7 +76,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 
 	stream_information = stream.info_struct(transfer_id)
 	for resend in range(resend_buffer):
-		transmission_socket.sendto(stream_information, str(addressing.destination.ipv4_address, addressing.udp_port))
+		transmission_socket.sendto(stream_information, (str(addressing.destination.ipv4_address), addressing.udp_port))
 
 	while (data := stream.read(692)):
 		# transfer_id :int # B
