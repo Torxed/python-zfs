@@ -53,9 +53,9 @@ class Image:
 
 	def info_struct(self, transfer_id):
 		volume = bytes(self.volume.name, 'UTF-8')
+
 		return (
-			struct.pack('B', 2)
-			+struct.pack('B', transfer_id)
-			+struct.pack('I', zlib.crc32(volume) & 0xffffffff)
-			+struct.pack('B', len(volume)) + volume
+			struct.pack('B', 2) # Frame type
+			+struct.pack('B', transfer_id) # Which session are we initating
+			+struct.pack('B', len(volume)) + volume # The volume name
 		)

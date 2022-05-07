@@ -116,30 +116,40 @@ class Reciever:
 		if frame.payload.payload.destination == self.port and (self.addr == '' or self.addr == frame.payload.destination):
 			data = frame.payload.payload.payload
 
-			transfer_id = struct.unpack('B', data[0:1])[0]
-			frame_index = struct.unpack('B', data[1:2])[0]
-			checksum = struct.unpack('I', data[2:6])[0]
-			length = struct.unpack('H', data[6:8])[0]
-			recieved_data = data[8:8+length]
-			
-			# print(len(data), data)
-			# print(data[0:1], transfer_id)
-			# print(data[1:2], frame_index)
-			# print(data[2:6], checksum)
-			# print(data[6:8], length)
-			# print('DATA:', data[8:8+length])
-			# print(data[8+length:8+length+4])
+			frame_type = struct.unpack('B', data[0:1])[0]
+			if frame_type == 2:
+				"""
+				Frame type 2 is a pre-flight frame of a full snapshot.
+				This frame will contain:
+					* Transfer ID (a session if you will)
+					* Volume/Dataset name
+				"""
+				transfer_id = struct.unpack('B', data[1:2])[0]
+				volume_name_len = struct.unpack('B', data[2:3])[0]
+				volume = data[3:3+volume_name_len]
 
-			previous_checksum = struct.unpack('I', data[8+length:8+length+4])[0]
+				print(transfer_id, volume)
+				yield ZFSFullDataset(
+					transfer_id=transfer_id,
+					name=volume
+				)
+			else:
+				transfer_id = struct.unpack('B', data[0:1])[0]
+				frame_index = struct.unpack('B', data[1:2])[0]
+				checksum = struct.unpack('I', data[2:6])[0]
+				length = struct.unpack('H', data[6:8])[0]
+				recieved_data = data[8:8+length]
+				
+				previous_checksum = struct.unpack('I', data[8+length:8+length+4])[0]
 
-			yield ZFSSnapshotChunk(
-				transfer_id = transfer_id,
-				frame_index = frame_index,
-				checksum = checksum,
-				length = length,
-				data = recieved_data,
-				previous_checksum = previous_checksum
-			)
+				yield ZFSSnapshotChunk(
+					transfer_id = transfer_id,
+					frame_index = frame_index,
+					checksum = checksum,
+					length = length,
+					data = recieved_data,
+					previous_checksum = previous_checksum
+				)
 
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:

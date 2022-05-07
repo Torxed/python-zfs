@@ -21,7 +21,17 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2, chun
 
 	stream_information = stream.info_struct(transfer_id)
 	for resend in range(resend_buffer):
-		transmission_socket.sendmsg([stream_information], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+		frame = Ethernet(
+			source=str(addressing.source.mac_address),
+			destination=str(addressing.destination.mac_address),
+			payload_type=8,
+			payload = IPv4(
+				source=addressing.source.ipv4_address,
+				destination=addressing.destination.ipv4_address,
+				payload=UDP(destination=addressing.udp_port, payload=stream_information) #, source_addr=addressing.source.ipv4_address, dest_addr=addressing.destination.ipv4_address)
+			)
+		)
+		transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
 
 	while (data := stream.read(chunk_length)):
 		# transfer_id :int # B
