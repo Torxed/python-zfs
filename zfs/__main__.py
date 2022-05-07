@@ -2,6 +2,8 @@ import importlib
 import sys
 import pathlib
 import logging
+import argparse
+import ipaddress
 
 if pathlib.Path('./zfs/__init__.py').absolute().exists():
 	spec = importlib.util.spec_from_file_location("zfs", "./zfs/__init__.py")
@@ -11,25 +13,44 @@ if pathlib.Path('./zfs/__init__.py').absolute().exists():
 else:
 	import zfs
 
+
+# utility = argparse.ArgumentParser(description="Parameters for the Python ZFS utility module", parents=[zfs.storage['argparse']], add_help=False)
+
+common_parameters = argparse.ArgumentParser(parents=[zfs.storage['argparse']], description="A set of common parameters for the tooling", add_help=False)
+common_parameters.add_argument("--destination-ip", nargs="?", type=ipaddress.IPv4Address, help="Which IP to send delta or a full sync.")
+common_parameters.add_argument("--destination-mac", nargs="?", type=str, help="Which MAC to send delta or a full sync.")
+common_parameters.add_argument("--source-ip", nargs="?", type=ipaddress.IPv4Address, help="Which IP to send as (can be an existing or a spoofed one).")
+common_parameters.add_argument("--source-mac", nargs="?", type=str, help="Which MAC to send as (can be an existing or spoofed one).")
+common_parameters.add_argument("--udp-port", nargs="?", type=ipaddress.IPv4Address, help="Which UDP port to send to.")
+
+common_parameters.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
+common_parameters.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
+common_parameters.add_argument("--delta-end", nargs="?", type=str, help="Which is the end of the delta.")
+
+common_parameters.add_argument("--dummy-data", nargs="?", type=pathlib.Path, help="Enables dummy transfer using a binary blob instead.")
+
+zfs.storage['arguments'], unknown = common_parameters.parse_known_args(namespace=zfs.storage['arguments'])
+
+module_entrypoints = argparse.ArgumentParser(parents=[common_parameters], description="A set of common parameters for the tooling", add_help=True)
+# Full Sync arguments
+utility_options = module_entrypoints.add_mutually_exclusive_group(required=True)
+utility_options.add_argument("--full-sync", default=False, action="store_true", help="Performs a full sync and transfer of a pool/dataset.")
+utility_options.add_argument("--send-delta", default=False, action="store_true", help="Sends a delta between two snapshots of a pool/dataset.")
+utility_options.add_argument("--snapshot", default=False, action="store_true", help="Takes a snapshot of a pool/dataset.")
+utility_options.add_argument("--reciever", default=False, action="store_true", help="Turns on reciever mode, which is a universal tooling to recieve datasets/delta from a sender.")
+
+zfs.storage['arguments'], unknown = module_entrypoints.parse_known_args(namespace=zfs.storage['arguments'])
+
 args = zfs.storage['arguments']
-if not any([args.full_sync, args.send_delta, args.snapshot]):
-	raise ValueError("Need to supply either --full-sync, --send-delta or --snapshot as a minimum.")
+#if not any([args.full_sync, args.send_delta, args.snapshot]):
+#	raise ValueError("Need to supply either --full-sync, --send-delta or --snapshot as a minimum.")
 
-group.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
-group.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
-group.add_argument("--delta-end", nargs="?", type=str, help="Which is the end of the delta.")
-
-group.add_argument("--destination-ip", nargs="?", type=ipaddress.IPv4address, help="Which IP to send delta or a full sync.")
-group.add_argument("--destination-mac", nargs="?", type=ipaddress.IPv4address, help="Which MAC to send delta or a full sync.")
-group.add_argument("--source-ip", nargs="?", type=ipaddress.IPv4address, help="Which IP to send as (can be an existing or a spoofed one).")
-group.add_argument("--source-mac", nargs="?", type=ipaddress.IPv4address, help="Which MAC to send as (can be an existing or spoofed one).")
-group.add_argument("--udp-port", nargs="?", type=ipaddress.IPv4address, help="Which UDP port to send to.")
 
 if args.full_sync:
-	if not all(args.pool, args.destination_ip, args.source_ip, args.destination_mac, args.source_mac):
+	if not all([args.pool, args.destination_ip, args.source_ip, args.destination_mac, args.source_mac]):
 		raise ValueError(f"--full-sync requires --pool, --destination-ip, --destination-mac, --source-ip and --source-mac to be defined, so we need to know which pool to fully sync with and which destination.")
 
-	pool = zfs.list.get_volume(args.pool)
+	pool = zfs.get_volume(args.pool)
 
 	postnord = zfs.NetNode(
 		interface=args.interface,
@@ -38,11 +59,12 @@ if args.full_sync:
 		udp_port=1337
 	)
 
-	with zfs.snapshots.Delta(snapshot1, snapshot2) as stream:
-		zfs.networking.deliver(transfer_id=1, stream=stream, addressing=postnord, on_send=encrypt)
+	with zfs.Image(zfs.Volume(name=args.pool)) as stream:
+		zfs.networking.deliver(transfer_id=1, stream=stream, addressing=postnord)
 
-	snapshot1.destroy()
-	snapshot2.destroy()
-
-	last_snapshot = list(pool.last_snapshots)[-1]
-	last_snapshot.restore()
+elif args.reciever:
+	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as stream:
+		while True:
+			for zfs_snapshot_chunk in stream:
+				print(zfs_snapshot_chunk)
+				#snapshot.restore(zfs_snapshot_chunk)

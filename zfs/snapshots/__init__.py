@@ -5,6 +5,7 @@ from abc import abstractmethod
 from subprocess import Popen, PIPE, STDOUT
 
 from ..models import Snapshot
+from .datasets import Image
 
 class Snapshot:
 	def __init__(self, namespace):

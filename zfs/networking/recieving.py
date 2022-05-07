@@ -5,7 +5,6 @@ import struct
 import zlib
 import binascii
 
-from .. import epoll, EPOLLIN, EPOLLHUP
 from ..models import ZFSFrame, ZFSSnapshotChunk, Ethernet, IPv4, UDP
 from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
@@ -42,8 +41,8 @@ class Reciever:
 		promisciousMode = promisc(self.socket, bytes(storage['arguments'].interface, 'UTF-8'))
 		promisciousMode.on()
 
-		self.poller = epoll()
-		self.poller.register(self.socket.fileno(), EPOLLIN | EPOLLHUP)
+		self.poller = select.epoll()
+		self.poller.register(self.socket.fileno(), select.EPOLLIN | select.EPOLLHUP)
 
 		# self.socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 		# self.socket.setblocking(0)
@@ -64,7 +63,7 @@ class Reciever:
 	
 				for fileno, event in self.poller.poll(0.025): # Retry up to 1 second
 					data, auxillary_data_raw, flags, addr = self.socket.recvmsg(65535, socket.CMSG_LEN(4096))
-					
+					print(addr, data)
 					# data, sender = self.socket.recvfrom(self.buffer_size)
 					data_recieved = True
 
@@ -79,6 +78,7 @@ class Reciever:
 					# 	}
 
 	def unpack_frame(self, data):
+		print(data)
 		ip_segments = struct.unpack("!12s4s4s", data[14:34])
 
 		ip_source, ip_dest = [
