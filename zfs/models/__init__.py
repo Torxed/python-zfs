@@ -5,7 +5,9 @@ from .snapshots import (
 )
 from .transmissions import (
 	ZFSFrame,
-	ZFSSnapshotChunk
+	ZFSSnapshotChunk,
+	ZFSFullDataset,
+	ZFSSnapshotDelta
 )
 from .networking import (
 	Ethernet_IPv4,

@@ -5,7 +5,15 @@ import struct
 import zlib
 import binascii
 
-from ..models import ZFSFrame, ZFSSnapshotChunk, Ethernet, IPv4, UDP
+from ..models import (
+	ZFSFrame,
+	ZFSSnapshotChunk,
+	ZFSFullDataset,
+	ZFSSnapshotDelta,
+	Ethernet,
+	IPv4,
+	UDP
+)
 from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
 
@@ -116,10 +124,12 @@ class Reciever:
 		if frame.payload.payload.destination == self.port and (self.addr == '' or self.addr == frame.payload.destination):
 			data = frame.payload.payload.payload
 
+			print(data)
+
 			frame_type = struct.unpack('B', data[0:1])[0]
-			if frame_type == 2:
+			if frame_type == 1:
 				"""
-				Frame type 2 is a pre-flight frame of a full snapshot.
+				Frame type 1 is a pre-flight frame of a delta between two snapshots.
 				This frame will contain:
 					* Transfer ID (a session if you will)
 					* Volume/Dataset name
@@ -128,19 +138,38 @@ class Reciever:
 				volume_name_len = struct.unpack('B', data[2:3])[0]
 				volume = data[3:3+volume_name_len]
 
-				print(transfer_id, volume)
 				yield ZFSFullDataset(
 					transfer_id=transfer_id,
-					name=volume
+					name=volume.decode('UTF-8')
 				)
-			else:
-				transfer_id = struct.unpack('B', data[0:1])[0]
-				frame_index = struct.unpack('B', data[1:2])[0]
-				checksum = struct.unpack('I', data[2:6])[0]
-				length = struct.unpack('H', data[6:8])[0]
-				recieved_data = data[8:8+length]
+			elif frame_type == 2:
+				"""
+				Frame type 2 is a pre-flight frame of a full sync of a dataset.
+				This frame will contain:
+					* Transfer ID (a session if you will)
+					* Volume/Dataset name
+				"""
+				transfer_id = struct.unpack('B', data[1:2])[0]
+				volume_name_len = struct.unpack('B', data[2:3])[0]
+				volume = data[3:3+volume_name_len]
+
+				yield ZFSSnapshotDelta(
+					transfer_id=transfer_id,
+					name=volume.decode('UTF-8')
+				)
+			elif frame_type == 3:
+				"""
+				Fram type 3 is chunk data for a given session.
+				The given session is defined based on the
+				pre-flight frame that was sent to initate the session.
+				"""
+				transfer_id = struct.unpack('B', data[1:2])[0]
+				frame_index = struct.unpack('B', data[2:3])[0]
+				checksum = struct.unpack('I', data[3:7])[0]
+				length = struct.unpack('H', data[7:9])[0]
+				recieved_data = data[9:9+length]
 				
-				previous_checksum = struct.unpack('I', data[8+length:8+length+4])[0]
+				previous_checksum = struct.unpack('I', data[9+length:9+length+4])[0]
 
 				yield ZFSSnapshotChunk(
 					transfer_id = transfer_id,
