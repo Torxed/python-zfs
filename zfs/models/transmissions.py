@@ -13,7 +13,8 @@ class ZFSFrame(pydantic.BaseModel):
 
 	def pack(self):
 		return (
-			struct.pack('B', self.transfer_id)
+			struct.pack('B', 3) # We are a data chunk
+			+struct.pack('B', self.transfer_id)
 			+struct.pack('B', self.frame_index)
 			+struct.pack('I', self.checksum)
 			+struct.pack('H', self.length)
@@ -51,3 +52,11 @@ class ZFSSnapshotChunk(pydantic.BaseModel):
 	@pydantic.validator('*')
 	def checksum(cls, value):
 		return value
+
+class ZFSFullDataset(pydantic.BaseModel):
+	transfer_id :int # B
+	name :str
+
+class ZFSSnapshotDelta(pydantic.BaseModel):
+	transfer_id :int
+	name :str

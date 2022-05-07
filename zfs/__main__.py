@@ -64,7 +64,8 @@ if args.full_sync:
 
 elif args.reciever:
 	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as stream:
+		print(stream)
 		while True:
 			for zfs_snapshot_chunk in stream:
-				print(zfs_snapshot_chunk)
+				print('Chunk:', repr(zfs_snapshot_chunk))
 				#snapshot.restore(zfs_snapshot_chunk)
