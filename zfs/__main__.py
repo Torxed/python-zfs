@@ -21,7 +21,7 @@ common_parameters.add_argument("--destination-ip", nargs="?", type=ipaddress.IPv
 common_parameters.add_argument("--destination-mac", nargs="?", type=str, help="Which MAC to send delta or a full sync.")
 common_parameters.add_argument("--source-ip", nargs="?", type=ipaddress.IPv4Address, help="Which IP to send as (can be an existing or a spoofed one).")
 common_parameters.add_argument("--source-mac", nargs="?", type=str, help="Which MAC to send as (can be an existing or spoofed one).")
-common_parameters.add_argument("--udp-port", nargs="?", type=ipaddress.IPv4Address, help="Which UDP port to send to.")
+common_parameters.add_argument("--udp-port", default=1337, nargs="?", type=ipaddress.IPv4Address, help="Which UDP port to send to.")
 
 common_parameters.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
 common_parameters.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
@@ -56,7 +56,7 @@ if args.full_sync:
 		interface=args.interface,
 		source=zfs.NetNodeAddress(mac_address=args.source_mac, ipv4_address=args.source_ip),
 		destination=zfs.NetNodeAddress(mac_address=args.destination_mac, ipv4_address=args.destination_ip),
-		udp_port=1337
+		udp_port=zfs.storage['arguments'].udp_port
 	)
 
 	with zfs.Image(zfs.Volume(name=args.pool)) as stream:
