@@ -13,32 +13,6 @@ from datetime import datetime, date
 from typing import Union, List, Optional, Dict, Any, Iterator, Callable
 from .storage import storage
 
-EPOLLIN = 0
-EPOLLHUP = 0
-class epoll():
-	""" #!if windows
-	Create a epoll() implementation that simulates the epoll() behavior.
-	This so that the rest of the code doesn't need to worry weither we're using select() or epoll().
-	"""
-	def __init__(self):
-		self.sockets = {}
-		self.monitoring = {}
-
-	def unregister(self, fileno, *args, **kwargs):
-		try:
-			del(self.monitoring[fileno])
-		except:
-			pass
-
-	def register(self, fileno, *args, **kwargs):
-		self.monitoring[fileno] = True
-
-	def poll(self, timeout=0.05, *args, **kwargs):
-		try:
-			return [[fileno, 1] for fileno in select.select(list(self.monitoring.keys()), [], [], timeout)[0]]
-		except OSError:
-			return []
-
 class SysCallError(BaseException):
 	pass
 
@@ -102,7 +76,7 @@ class SysCommandWorker:
 		self.exit_code :Optional[int] = None
 		self._trace_log = b''
 		self._trace_log_pos = 0
-		self.poll_object = epoll()
+		self.poll_object = select.epoll()
 		self.child_fd :Optional[int] = None
 		self.started :Optional[float] = None
 		self.ended :Optional[float] = None
@@ -265,7 +239,7 @@ class SysCommandWorker:
 				return False
 
 		self.started = time.time()
-		self.poll_object.register(self.child_fd, EPOLLIN | EPOLLHUP)
+		self.poll_object.register(self.child_fd, select.EPOLLIN | select.EPOLLHUP)
 
 		return True
 

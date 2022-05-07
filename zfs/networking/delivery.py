@@ -6,7 +6,7 @@ from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
 
 
-def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
+def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
 	# sender = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 	transmission_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
 	transmission_socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
@@ -23,7 +23,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 	for resend in range(resend_buffer):
 		transmission_socket.sendmsg([stream_information], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
 
-	while (data := stream.read(692)):
+	while (data := stream.read(chunk_length)):
 		# transfer_id :int # B
 		# frame_index :int # B
 		# checksum :int # I
@@ -58,6 +58,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2):
 		# socket.sendmsg(frame.pack(), response.frame.request_frame.auxillary_data_raw, response.frame.request_frame.flags, (response.frame.request_frame.server.configuration.interface, 68))
 
 		transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+		print(f"Sent: {frame.pack()}")
 		
 		previous_data = data
 		frame_index += 1
