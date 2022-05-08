@@ -57,6 +57,8 @@ def test_sending_full_image():
 		fh.write('keyserver-options auto-key-retrieve\n')
 		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
 
+	zfs.SysCommand('gpg --recv-keys 6AD860EED4598027', peak_output=True)
+
 	for package in ['zfs-utils', 'zfs-linux']:
 		for root, dirs, files in os.walk(f"{build_root}/{package}"):
 			os.chown(root, uid, gid)
