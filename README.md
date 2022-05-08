@@ -1,7 +1,35 @@
 # python-zfs
 Python wrapper for zfs
 
-# Example usage
+# Tooling usage
+
+## Starting the reciever
+
+```
+$ python -m zfs --reciever --interface testif-out [--dummy-data ./testdata_recv.bin]
+```
+
+## Sending a full dataset
+
+```
+$ python -m zfs --interface testif-in --full-sync [--dummy-data ~/testdata.bin] --pool testing --destination-ip 192.168.1.2 --destination-mac 'e2:ff:48:6e:a9:fe' --source-ip '192.168.1.1' --source-mac '46:dc:e7:58:d0:a2'
+```
+
+:note: This will send from `46:dc:e7:58:d0:a2 (192.168.1.1)` to `e2:ff:48:6e:a9:fe (192.168.2.2)`.
+python-zfs sends in promiscious mode so the IP and MAC source doesn't actually have to existing.
+In theory, neither does the sender, but if there's any network equipment between the sender and reciever,
+the destination must be known by the network before hand.
+
+:note: Also note that `--dummy-data` is used to simluate the pool `testing` and can contain anything.
+It can also be used to send a file instead, but functionality cannot be guaranteed and is for testing mainly.
+
+## Sending delta between two snapshots
+
+```
+$ python -m zfs --interface testif-in --send-delta --delta-start pool/testync@0 --delta-end pool/testsync@1 [--dummy-data ~/testdata.bin] --pool testing --destination-ip 192.168.1.2 --destination-mac 'e2:ff:48:6e:a9:fe' --source-ip '192.168.1.1' --source-mac '46:dc:e7:58:d0:a2'
+```
+
+# Library usage
 
 ## Listing all snapshots
 
