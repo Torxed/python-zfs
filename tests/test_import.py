@@ -57,6 +57,9 @@ def test_sending_full_image():
 		fh.write('keyserver-options auto-key-retrieve\n')
 		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
 
+	os.chown('/home/builduser/.gnupg', uid, uid)
+	os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
+
 	for package in ['zfs-utils', 'zfs-linux']:
 		for root, dirs, files in os.walk(f"{build_root}/{package}"):
 			os.chown(root, uid, gid)
