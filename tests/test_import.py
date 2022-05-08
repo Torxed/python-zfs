@@ -14,7 +14,7 @@ pool_name = 'testpool_python_zfs'
 def test_sending_full_image():
 	import zfs
 
-	print(zfs.SysCommand('/usr/bin/zfs --help').decode('UTF-8'))
+	# print(zfs.SysCommand('/usr/bin/zfs --help').decode('UTF-8'))
 
 	build_root = pathlib.Path('/usr/aur-builds/').resolve()
 	build_root.mkdir(parents=True, exist_ok=True)
