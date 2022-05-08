@@ -57,7 +57,9 @@ def test_sending_full_image():
 		fh.write('keyserver-options auto-key-retrieve\n')
 		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
 
+	os.chmod('/home/builduser/.gnupg', 0o640)
 	os.chown('/home/builduser/.gnupg', uid, uid)
+	os.chmod('/home/builduser/.gnupg/gpg.conf', 0o640)
 	os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
 
 	for package in ['zfs-utils', 'zfs-linux']:
@@ -67,7 +69,7 @@ def test_sending_full_image():
 				os.chown(os.path.join(root, obj), uid, gid)
 
 		zfs.log(f"Building {package}, this might take time..", fg="orange", level=logging.WARNING)
-		zfs.SysCommand(f"su - builduser -c 'cd {build_root}/{package}/; gpg --recv-keys 6AD860EED4598027; makepkg -si --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
+		zfs.SysCommand(f"su - builduser -c 'cd {build_root}/{package}/; gpg --recv-keys 6AD860EED4598027; makepkg -si -f --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
 
 	if sudoers_existed is False:
 		pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
