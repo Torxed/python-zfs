@@ -1,6 +1,6 @@
-import logging
 import os
 import sys
+import pathlib
 
 from .storage import storage
 
@@ -78,13 +78,13 @@ def log(*args, **kwargs):
 		absolute_logfile = os.path.join(storage.get('LOG_PATH', './'), filename)
 
 		try:
-			Path(absolute_logfile).parents[0].mkdir(exist_ok=True, parents=True)
+			pathlib.Path(absolute_logfile).parents[0].mkdir(exist_ok=True, parents=True)
 			with open(absolute_logfile, 'a') as log_file:
 				log_file.write("")
 		except PermissionError:
 			# Fallback to creating the log file in the current folder
-			err_string = f"Not enough permission to place log file at {absolute_logfile}, creating it in {Path('./').absolute() / filename} instead."
-			absolute_logfile = Path('./').absolute() / filename
+			err_string = f"Not enough permission to place log file at {absolute_logfile}, creating it in {pathlib.Path('./').absolute() / filename} instead."
+			absolute_logfile = pathlib.Path('./').absolute() / filename
 			absolute_logfile.parents[0].mkdir(exist_ok=True)
 			absolute_logfile = str(absolute_logfile)
 			storage['LOG_PATH'] = './'

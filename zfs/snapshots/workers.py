@@ -16,5 +16,3 @@ def setup_worker(obj):
 	elif type(obj) == ZFSFullDataset:
 		log(f"Setting up a Image reader for {repr(obj)}", level=logging.INFO, fg="grey")
 		workers[obj.id] = ImageReader(obj)
-
-#snapshot.restore(zfs_snapshot_chunk)
