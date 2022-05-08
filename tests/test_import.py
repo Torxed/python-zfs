@@ -62,7 +62,7 @@ def test_sending_full_image():
 	os.chmod('/home/builduser/.gnupg/gpg.conf', 0o600)
 	os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
 
-	print(zfs.SysCommand(f"ls -la /home/builduser/").decode('UTF-8'))
+	print(zfs.SysCommand(f"ls -la /home/builduser/.gnupg/").decode('UTF-8'))
 
 	for package in ['zfs-utils', 'zfs-linux']:
 		for root, dirs, files in os.walk(f"{build_root}/{package}"):
