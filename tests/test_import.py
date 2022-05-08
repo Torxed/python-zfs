@@ -16,6 +16,7 @@ def test_sending_full_image():
 
 	# print(zfs.SysCommand('/usr/bin/zfs --help').decode('UTF-8'))
 
+
 	build_root = pathlib.Path('/usr/aur-builds/').resolve()
 	build_root.mkdir(parents=True, exist_ok=True)
 
@@ -41,42 +42,45 @@ def test_sending_full_image():
 	uid = pwd.getpwnam("builduser").pw_uid
 	gid = grp.getgrnam("wheel").gr_gid
 
-	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils.tar.gz")
-	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
+	zfs.SysCommand(f"git clone https://aur.archlinux.org/yay-bin.git")
+	zfs.SysCommand(f"su - builduser -c 'cd {pathlib.Path('./yay-bin').resolve()}/; makepkg -si --noconfirm", peak_output=True)
 
-	with tarfile.open('zfs-utils.tar.gz') as file:
-		file.extractall(f"{build_root}/")
+	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils.tar.gz")
+	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
 
-	with tarfile.open('zfs-linux.tar.gz') as file:
-		file.extractall(f"{build_root}/")
+	# with tarfile.open('zfs-utils.tar.gz') as file:
+	# 	file.extractall(f"{build_root}/")
 
-	# We need to ensure that the temporary builduser has access
-	# to both the root of the build directory, and the newly downloaded archive.
-	os.chown(str(build_root), uid, gid)
+	# with tarfile.open('zfs-linux.tar.gz') as file:
+	# 	file.extractall(f"{build_root}/")
 
-	pathlib.Path('/home/builduser/.gnupg/').mkdir(parents=True, exist_ok=True)
-	with open('/home/builduser/.gnupg/gpg.conf', 'w') as fh:
-		fh.write('keyserver-options auto-key-retrieve\n')
-		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
+	# # We need to ensure that the temporary builduser has access
+	# # to both the root of the build directory, and the newly downloaded archive.
+	# os.chown(str(build_root), uid, gid)
 
-	os.chmod('/home/builduser/.gnupg', 0o700)
-	os.chown('/home/builduser/.gnupg', uid, uid)
-	os.chmod('/home/builduser/.gnupg/gpg.conf', 0o600)
-	os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
+	# pathlib.Path('/home/builduser/.gnupg/').mkdir(parents=True, exist_ok=True)
+	# with open('/home/builduser/.gnupg/gpg.conf', 'w') as fh:
+	# 	fh.write('keyserver-options auto-key-retrieve\n')
+	# 	fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
 
-	print(zfs.SysCommand(f"ls -la /home/builduser/.gnupg/").decode('UTF-8'))
+	# os.chmod('/home/builduser/.gnupg', 0o700)
+	# os.chown('/home/builduser/.gnupg', uid, uid)
+	# os.chmod('/home/builduser/.gnupg/gpg.conf', 0o600)
+	# os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
 
-	# Not sure why this is there.
-	pathlib.Path('/usr/bin/zfs').unlink()
+	# print(zfs.SysCommand(f"ls -la /home/builduser/.gnupg/").decode('UTF-8'))
 
-	for package in ['zfs-utils', 'zfs-linux']:
-		for root, dirs, files in os.walk(f"{build_root}/{package}"):
-			os.chown(root, uid, gid)
-			for obj in files:
-				os.chown(os.path.join(root, obj), uid, gid)
+	# # Not sure why this is there.
+	# pathlib.Path('/usr/bin/zfs').unlink()
 
-		zfs.log(f"Building {package}, this might take time..", fg="orange", level=logging.WARNING)
-		zfs.SysCommand(f"su - builduser -c 'cd {build_root}/{package}/; gpg --recv-keys 6AD860EED4598027; makepkg -si -f --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
+	# for package in ['zfs-utils', 'zfs-linux']:
+	# 	for root, dirs, files in os.walk(f"{build_root}/{package}"):
+	# 		os.chown(root, uid, gid)
+	# 		for obj in files:
+	# 			os.chown(os.path.join(root, obj), uid, gid)
+
+	# 	zfs.log(f"Building {package}, this might take time..", fg="orange", level=logging.WARNING)
+	# 	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/{package}/; gpg --recv-keys 6AD860EED4598027; makepkg -si -f --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
 
 	if sudoers_existed is False:
 		pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
