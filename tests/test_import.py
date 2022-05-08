@@ -52,10 +52,11 @@ def test_sending_full_image():
 	# to both the root of the build directory, and the newly downloaded archive.
 	os.chown(str(build_root), uid, gid)
 
+	pathlib.Path('/home/builduser/.gnupg/').mkdir(parents=True, exist_ok=True)
 	with open('/home/builduser/.gnupg/gpg.conf', 'w') as fh:
 		fh.write('keyserver-options auto-key-retrieve\n')
 		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
-		
+
 	for package in ['zfs-utils', 'zfs-linux']:
 		for root, dirs, files in os.walk(f"{build_root}/{package}"):
 			os.chown(root, uid, gid)
