@@ -42,7 +42,9 @@ from .models import (
 	Namespace,
 	Volume,
 	ZFSFrame,
-	ZFSSnapshotChunk,
+	ZFSChunk,
+	ZFSSnapshotDelta,
+	ZFSFullDataset,
 	Ethernet_IPv4,
 	Ethernet_Unknown,
 	NetNodeAddress,
@@ -54,8 +56,11 @@ from .models import (
 from .snapshots import (
 	Delta,
 	DeltaReader,
+	ImageReader,
 	Snapshot,
-	Image
+	Image,
+	has_worker_for,
+	setup_worker
 )
 from .list import (
 	volumes,
@@ -64,3 +69,4 @@ from .list import (
 	last_snapshots
 )
 from . import networking
+from .snapshots.workers import workers

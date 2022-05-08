@@ -7,7 +7,7 @@ import binascii
 
 from ..models import (
 	ZFSFrame,
-	ZFSSnapshotChunk,
+	ZFSChunk,
 	ZFSFullDataset,
 	ZFSSnapshotDelta,
 	Ethernet,
@@ -124,12 +124,10 @@ class Reciever:
 		if frame.payload.payload.destination == self.port and (self.addr == '' or self.addr == frame.payload.destination):
 			data = frame.payload.payload.payload
 
-			print(data)
-
 			frame_type = struct.unpack('B', data[0:1])[0]
 			if frame_type == 1:
 				"""
-				Frame type 1 is a pre-flight frame of a delta between two snapshots.
+				Frame type 2 is a pre-flight frame of a full sync of a dataset.
 				This frame will contain:
 					* Transfer ID (a session if you will)
 					* Volume/Dataset name
@@ -144,7 +142,7 @@ class Reciever:
 				)
 			elif frame_type == 2:
 				"""
-				Frame type 2 is a pre-flight frame of a full sync of a dataset.
+				Frame type 1 is a pre-flight frame of a delta between two snapshots.
 				This frame will contain:
 					* Transfer ID (a session if you will)
 					* Volume/Dataset name
@@ -171,7 +169,7 @@ class Reciever:
 				
 				previous_checksum = struct.unpack('I', data[9+length:9+length+4])[0]
 
-				yield ZFSSnapshotChunk(
+				yield ZFSChunk(
 					transfer_id = transfer_id,
 					frame_index = frame_index,
 					checksum = checksum,

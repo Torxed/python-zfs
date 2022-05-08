@@ -9,13 +9,14 @@ import sys
 import time
 import select
 import re
+import io
+import pathlib
 from datetime import datetime, date
 from typing import Union, List, Optional, Dict, Any, Iterator, Callable
 from .storage import storage
 
 class SysCallError(BaseException):
 	pass
-
 
 def clear_vt100_escape_codes(data :Union[bytes, str]):
 	# https://stackoverflow.com/a/43627833/929999
@@ -39,6 +40,26 @@ def locate_binary(name):
 			break  # Don't recurse
 
 	raise RequirementError(f"Binary {name} does not exist.")
+
+
+class FakePopen:
+	def __init__(self, fake_data :pathlib.Path):
+		self.index_pos = 0
+		self.stdout = fake_data.open('rb')
+		self.stderr = io.StringIO()
+		self.stdout.seek(-1, os.SEEK_END)
+		self.length = self.stdout.tell()
+		self.stdout.seek(0)
+
+	def poll(self):
+		return None if self.index_pos < self.length else 0
+
+class FakePopenDestination:
+	def __init__(self, fake_data :pathlib.Path):
+		self.index_pos = 0
+		self.stdout = io.BytesIO()
+		self.stderr = io.BytesIO()
+		self.stdin = fake_data.open('wb')
 
 class SysCommandWorker:
 	def __init__(self,
