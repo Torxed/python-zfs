@@ -39,7 +39,7 @@ def test_sending_full_image():
 	uid = pwd.getpwnam("builduser").pw_uid
 	gid = grp.getgrnam("wheel").gr_gid
 
-	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils")
+	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils.tar.gz")
 	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
 
 	with tarfile.open('zfs-utils.tar.gz') as file:
