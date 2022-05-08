@@ -20,7 +20,6 @@ jobs:
             # --cap-add=MKNOD --device-cgroup-rule="b 7:* rmw"
         steps:
             - uses: actions/checkout@v2
-            - run: /usr/bin/zfs --help
             - run: pacman --noconfirm -Syu git base-devel sudo python python-pytest python-pip python-pydantic parted
             # - run: python -m pip install --upgrade pip
             - run: pip install .
