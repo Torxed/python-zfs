@@ -7,6 +7,7 @@ import os
 import shutil
 import time
 import logging
+import tarfile
 
 pool_name = 'testpool_python_zfs'
 
@@ -38,8 +39,11 @@ def test_sending_full_image():
 	uid = pwd.getpwnam("builduser").pw_uid
 	gid = grp.getgrnam("wheel").gr_gid
 
+	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils")
 	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
-	import tarfile
+
+	with tarfile.open('zfs-utils.tar.gz') as file:
+		file.extractall(f"{build_root}/")
 
 	with tarfile.open('zfs-linux.tar.gz') as file:
 		file.extractall(f"{build_root}/")
@@ -47,13 +51,15 @@ def test_sending_full_image():
 	# We need to ensure that the temporary builduser has access
 	# to both the root of the build directory, and the newly downloaded archive.
 	os.chown(str(build_root), uid, gid)
-	for root, dirs, files in os.walk(f"{build_root}/zfs-linux"):
-		os.chown(root, uid, gid)
-		for obj in files:
-			os.chown(os.path.join(root, obj), uid, gid)
 
-	zfs.log(f"Building ZFS, this might take time..", fg="orange", level=logging.WARNING)
-	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/zfs-linux/; makepkg -si --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
+	for package in ['zfs-utils', 'zfs-linux']:
+		for root, dirs, files in os.walk(f"{build_root}/{package}"):
+			os.chown(root, uid, gid)
+			for obj in files:
+				os.chown(os.path.join(root, obj), uid, gid)
+
+		zfs.log(f"Building {package}, this might take time..", fg="orange", level=logging.WARNING)
+		zfs.SysCommand(f"su - builduser -c 'cd {build_root}/{package}/; makepkg -si --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
 
 	if sudoers_existed is False:
 		pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
