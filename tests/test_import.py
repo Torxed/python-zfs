@@ -76,9 +76,8 @@ def test_sending_full_image():
 	if pathlib.Path(f'/{pool_name}/testsync/test.txt').exists():
 		raise AssertionError(f"Could not restore snapshot {snapshot1} on {pool}")
 
-	# try:
-	# 	zfs.SysCommand(f"zpool destroy {pool_name}")
-	# except zfs.exceptions.SysCallError:
-	# 	pass
+	try:
+		zfs.SysCommand(f"zpool destroy {pool_name}")
+	except zfs.exceptions.SysCallError:
+		pass
 
-test_sending_full_image()
