@@ -18,7 +18,11 @@ def test_sending_full_image():
 
 	try:
 		zfs.SysCommand(f"zpool destroy {pool_name}")
-	except zfs.exceptions.SysCallError:
+	except (zfs.exceptions.SysCallError, zfs.exceptions.RequirementError):
+		"""
+		Either we have never installed zfs-linux before,
+		or the pool didn't exist.
+		"""
 		pass
 
 	try:
