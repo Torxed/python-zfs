@@ -49,7 +49,7 @@ def test_sending_full_image():
 			os.chown(os.path.join(root, obj), uid, gid)
 
 	zfs.log(f"Building ZFS, this might take time..", fg="orange", level=logging.WARNING)
-	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/zfs-linux/; makepkg -si --noconfirm'", working_directory=f"{build_root}/zfs-linux/")
+	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/zfs-linux/; makepkg -si --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
 
 	if sudoers_existed is False:
 		pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
