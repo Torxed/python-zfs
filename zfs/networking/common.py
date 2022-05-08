@@ -1,5 +1,4 @@
 import ctypes
-import socket
 import fcntl
 
 ETH_P_ALL = 0x0003
@@ -17,12 +16,12 @@ class tpacket_auxdata(ctypes.Structure):
 		("tp_padding", ctypes.c_ushort),
 	]
 
-## This is a ctype structure that matches the
-## requirements to set a socket in promisc mode.
-## In all honesty don't know where i found the values :)
+# This is a ctype structure that matches the
+# requirements to set a socket in promisc mode.
+# In all honesty don't know where i found the values :)
 class ifreq(ctypes.Structure):
-		_fields_ = [("ifr_ifrn", ctypes.c_char * 16),
-					("ifr_flags", ctypes.c_short)]
+	_fields_ = [("ifr_ifrn", ctypes.c_char * 16),
+				("ifr_flags", ctypes.c_short)]
 
 class promisc():
 	IFF_PROMISC = 0x100
@@ -36,9 +35,7 @@ class promisc():
 		self.ifr = ifreq()
 
 	def on(self):
-		## -- Set up promisc mode:
-		## 
-
+		# -- Set up promisc mode:
 
 		self.ifr.ifr_ifrn = self.interface
 
@@ -46,10 +43,10 @@ class promisc():
 		self.ifr.ifr_flags |= self.IFF_PROMISC
 
 		fcntl.ioctl(self.fileno, self.SIOCSIFFLAGS, self.ifr)
-		## ------------- DONE
+		# ------------- DONE
 
 	def off(self):
-		## Turn promisc mode off:
+		# Turn promisc mode off:
 		self.ifr.ifr_flags &= ~self.IFF_PROMISC
 		fcntl.ioctl(self.fileno, self.SIOCSIFFLAGS, self.ifr)
-		## ------------- DONE
+		# ------------- DONE
