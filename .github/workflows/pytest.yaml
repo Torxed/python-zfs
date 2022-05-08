@@ -20,7 +20,7 @@ jobs:
             # --cap-add=MKNOD --device-cgroup-rule="b 7:* rmw"
         steps:
             - uses: actions/checkout@v2
-            - run: pacman --noconfirm -Syu git base-devel sudo python python-pytest python-pip python-pydantic parted
+            - run: pacman --noconfirm -Sy git base-devel sudo python python-pytest python-pip python-pydantic parted
             # Setup build user
             - run: useradd -m -G wheel -s /bin/bash builduser
             - run: |
