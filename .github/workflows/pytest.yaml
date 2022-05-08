@@ -1,4 +1,9 @@
-on: [ push, pull_request ]
+on: 
+    pull_request:
+        types: [opened, reopened]
+    push:
+        paths:
+            '**.py'
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
