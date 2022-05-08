@@ -1,4 +1,14 @@
-on: [ push, pull_request ]
+on: 
+    pull_request:
+        types: [opened, reopened]
+    push:
+        paths:
+            '**'
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
 name: flake8 linting
 jobs:
     flake8:
