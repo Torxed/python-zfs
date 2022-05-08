@@ -27,8 +27,6 @@ common_parameters.add_argument("--pool", nargs="?", type=str, help="Defines whic
 common_parameters.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
 common_parameters.add_argument("--delta-end", nargs="?", type=str, help="Which is the end of the delta.")
 
-common_parameters.add_argument("--dummy-data", nargs="?", type=pathlib.Path, help="Enables dummy transfer using a binary blob instead.")
-
 zfs.storage['arguments'], unknown = common_parameters.parse_known_args(namespace=zfs.storage['arguments'])
 
 module_entrypoints = argparse.ArgumentParser(parents=[common_parameters], description="A set of common parameters for the tooling", add_help=True)
