@@ -18,6 +18,9 @@ class Snapshot(pydantic.BaseModel):
 	mountpoint :Optional[str] = None
 	worker :Optional[Popen] = None
 
+	class Config:
+		arbitrary_types_allowed = True
+
 	def destroy(self):
 		from .. import SysCommand
 
