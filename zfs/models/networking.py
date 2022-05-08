@@ -2,8 +2,7 @@ import pydantic
 import ipaddress
 import random
 import struct
-import socket
-from typing import Union, Type
+from typing import Union
 
 class Ethernet_IPv4:
 	pass
@@ -76,7 +75,7 @@ class UDP(pydantic.BaseModel):
 		frame += struct.pack('>H', self.checksum)
 		frame += self.payload
 
-		return frame	
+		return frame
 
 class IPv4(pydantic.BaseModel):
 	source :ipaddress.IPv4Address
@@ -133,7 +132,7 @@ class IPv4(pydantic.BaseModel):
 		header = struct.pack('B', self.DSC << 4 | self.ECN)
 		header += struct.pack('>H', self.length)
 		header += struct.pack('>H', self.identification)
-		header += struct.pack('>H', self.reserved_bit << 8+7 | self.do_not_fragment << 8+6 | self.more_fragments << 8+5 | self.fragment_offset)
+		header += struct.pack('>H', self.reserved_bit << 8 + 7 | self.do_not_fragment << 8 + 6 | self.more_fragments << 8 + 5 | self.fragment_offset)
 		header += struct.pack('B', self.ttl)
 		header += struct.pack('B', self.protocol)
 		header += struct.pack('>H', self.checksum)

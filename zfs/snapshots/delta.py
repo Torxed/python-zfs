@@ -3,7 +3,7 @@ import struct
 import zlib
 import logging
 from abc import abstractmethod
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -46,11 +46,11 @@ class Delta:
 		destination = bytes(self.destination.name, 'UTF-8')
 		return (
 			struct.pack('B', 1)
-			+struct.pack('B', transfer_id)
-			+struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
-			+struct.pack('B', len(origin)) + origin
-			+struct.pack('B', len(destination)) + destination
-			+b'\x00'*(1392-8-len(origin)-len(destination))
+			+ struct.pack('B', transfer_id)
+			+ struct.pack('I', zlib.crc32(origin + destination) & 0xffffffff)
+			+ struct.pack('B', len(origin)) + origin
+			+ struct.pack('B', len(destination)) + destination
+			+ b'\x00' * (1392 - 8 - len(origin) - len(destination))
 		)
 
 	@abstractmethod
@@ -60,10 +60,10 @@ class Delta:
 		transfer_id = struct.unpack('B', frame[1:2])[0] # 1 Byte
 		crc32_info = struct.unpack('I', frame[2:6])[0] # 4 Bytes
 		origin_name_length = struct.unpack('B', frame[6:7])[0] # Length of the snapshot origin name
-		origin_name = frame[7:7+origin_name_length]
-		destination_name_length = struct.unpack('B', frame[7+origin_name_length:7+origin_name_length+1])[0]
-		destination_name = frame[7+origin_name_length+1:7+origin_name_length+1+destination_name_length]
-		end_frame = 7+origin_name_length+1+destination_name_length
+		origin_name = frame[7:7 + origin_name_length]
+		destination_name_length = struct.unpack('B', frame[7 + origin_name_length:7 + origin_name_length + 1])[0]
+		destination_name = frame[7 + origin_name_length + 1:7 + origin_name_length + 1 + destination_name_length]
+		end_frame = 7 + origin_name_length + 1 + destination_name_length
 
 		if len(frame[end_frame:].strip(b'\x00')):
 			raise ValueError(f"Received too many bytes in Delta informational frame: {len(frame[end_frame:])} bytes too many")

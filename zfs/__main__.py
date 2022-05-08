@@ -42,8 +42,8 @@ utility_options.add_argument("--reciever", default=False, action="store_true", h
 zfs.storage['arguments'], unknown = module_entrypoints.parse_known_args(namespace=zfs.storage['arguments'])
 
 args = zfs.storage['arguments']
-#if not any([args.full_sync, args.send_delta, args.snapshot]):
-#	raise ValueError("Need to supply either --full-sync, --send-delta or --snapshot as a minimum.")
+# if not any([args.full_sync, args.send_delta, args.snapshot]):
+# 	raise ValueError("Need to supply either --full-sync, --send-delta or --snapshot as a minimum.")
 
 
 if args.full_sync:

@@ -1,5 +1,3 @@
-import hashlib
-import json
 import logging
 import os
 import pty
@@ -11,12 +9,11 @@ import select
 import re
 import io
 import pathlib
-from datetime import datetime, date
 from typing import Union, List, Optional, Dict, Any, Iterator, Callable
-from .storage import storage
 
-class SysCallError(BaseException):
-	pass
+from .storage import storage
+from .logger import log
+from .exceptions import SysCallError, RequirementError
 
 def clear_vt100_escape_codes(data :Union[bytes, str]):
 	# https://stackoverflow.com/a/43627833/929999
@@ -25,11 +22,16 @@ def clear_vt100_escape_codes(data :Union[bytes, str]):
 	else:
 		vt100_escape_regex = r'\x1B\[[?0-9;]*[a-zA-Z]'
 
-
 	for match in re.findall(vt100_escape_regex, data, re.IGNORECASE):
 		data = data.replace(match, '' if type(data) == str else b'')
 
 	return data
+
+def pid_exists(pid: int) -> bool:
+	try:
+		return any(subprocess.check_output(['/usr/bin/ps', '--no-headers', '-o', 'pid', '-p', str(pid)]).strip())
+	except subprocess.CalledProcessError:
+		return False
 
 def locate_binary(name):
 	for PATH in os.environ['PATH'].split(':'):
@@ -228,8 +230,6 @@ class SysCommandWorker:
 						self.exit_code = 1
 
 	def execute(self) -> bool:
-		import pty
-
 		if (old_dir := os.getcwd()) != self.working_directory:
 			os.chdir(str(self.working_directory))
 

@@ -1,13 +1,6 @@
 import select
-import struct
-import zlib
 import logging
-from abc import abstractmethod
-from subprocess import Popen, PIPE, STDOUT
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-	from ..models import Snapshot
+from subprocess import Popen, PIPE
 
 from ..storage import storage
 from ..general import FakePopenDestination

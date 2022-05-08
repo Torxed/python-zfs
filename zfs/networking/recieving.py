@@ -6,7 +6,6 @@ import zlib
 import binascii
 
 from ..models import (
-	ZFSFrame,
 	ZFSChunk,
 	ZFSFullDataset,
 	ZFSSnapshotDelta,
@@ -28,8 +27,8 @@ def unpack_snapshot_frame(frame):
 		"index" : struct.unpack('B', frame[1:2])[0],
 		"crc_data" : struct.unpack('I', frame[2:6])[0],
 		"data_len" : length,
-		"data" : frame[HEADER_LENGTH:HEADER_LENGTH+data_position],
-		"previous_data" : frame[HEADER_LENGTH+data_position:]
+		"data" : frame[HEADER_LENGTH:HEADER_LENGTH + data_position],
+		"previous_data" : frame[HEADER_LENGTH + data_position:]
 	}
 
 class Reciever:
@@ -105,8 +104,8 @@ class Reciever:
 		mac_dest, mac_source = (binascii.hexlify(mac) for mac in ethernet_segments[:2])
 		
 		frame = Ethernet(
-			source=':'.join(mac_source[i:i+2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
-			destination=':'.join(mac_dest[i:i+2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
+			source=':'.join(mac_source[i:i + 2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
+			destination=':'.join(mac_dest[i:i + 2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
 			payload_type=binascii.hexlify(ethernet_segments[2]),
 			payload=IPv4(
 				source=ip_source,
@@ -116,7 +115,7 @@ class Reciever:
 					destination=destination_port,
 					length=udp_payload_len,
 					checksum=udp_checksum,
-					payload=data[42:42+udp_payload_len]
+					payload=data[42:42 + udp_payload_len]
 				)
 			)
 		)
@@ -134,7 +133,7 @@ class Reciever:
 				"""
 				transfer_id = struct.unpack('B', data[1:2])[0]
 				volume_name_len = struct.unpack('B', data[2:3])[0]
-				volume = data[3:3+volume_name_len]
+				volume = data[3:3 + volume_name_len]
 
 				yield ZFSFullDataset(
 					transfer_id=transfer_id,
@@ -149,7 +148,7 @@ class Reciever:
 				"""
 				transfer_id = struct.unpack('B', data[1:2])[0]
 				volume_name_len = struct.unpack('B', data[2:3])[0]
-				volume = data[3:3+volume_name_len]
+				volume = data[3:3 + volume_name_len]
 
 				yield ZFSSnapshotDelta(
 					transfer_id=transfer_id,
@@ -165,17 +164,17 @@ class Reciever:
 				frame_index = struct.unpack('B', data[2:3])[0]
 				checksum = struct.unpack('I', data[3:7])[0]
 				length = struct.unpack('H', data[7:9])[0]
-				recieved_data = data[9:9+length]
+				recieved_data = data[9:9 + length]
 				
-				previous_checksum = struct.unpack('I', data[9+length:9+length+4])[0]
+				previous_checksum = struct.unpack('I', data[9 + length:9 + length + 4])[0]
 
 				yield ZFSChunk(
-					transfer_id = transfer_id,
-					frame_index = frame_index,
-					checksum = checksum,
-					length = length,
-					data = recieved_data,
-					previous_checksum = previous_checksum
+					transfer_id=transfer_id,
+					frame_index=frame_index,
+					checksum=checksum,
+					length=length,
+					data=recieved_data,
+					previous_checksum=previous_checksum
 				)
 
 	def recieve_frame(self, frame, sender):

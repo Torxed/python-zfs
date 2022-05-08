@@ -3,7 +3,7 @@ import argparse
 import logging
 import ipaddress
 
-from .storage import *
+from .storage import storage
 from .logger import log
 
 __version__ = '0.0.1.dev1'
@@ -36,7 +36,7 @@ match storage['arguments'].verbosity_level.lower():
 	case 'noset':
 		storage['arguments'].verbosity_level = logging.NOSET
 
-from .general import SysCommandWorker, SysCommand 
+from .general import SysCommandWorker, SysCommand
 from .models import (
 	Snapshot,
 	Namespace,
@@ -57,7 +57,6 @@ from .snapshots import (
 	Delta,
 	DeltaReader,
 	ImageReader,
-	Snapshot,
 	Image,
 	has_worker_for,
 	setup_worker

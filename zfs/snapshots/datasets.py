@@ -1,11 +1,8 @@
-import select
 import struct
-import zlib
 import pathlib
-from abc import abstractmethod
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 
-from ..models import Snapshot, Volume
+from ..models import Volume
 # from ..general import FakePopen
 from ..storage import storage
 
@@ -56,6 +53,6 @@ class Image:
 
 		return (
 			struct.pack('B', 1) # Frame type 1 = Full Image
-			+struct.pack('B', transfer_id) # Which session are we initating
-			+struct.pack('B', len(volume)) + volume # The volume name
+			+ struct.pack('B', transfer_id) # Which session are we initating
+			+ struct.pack('B', len(volume)) + volume # The volume name
 		)
