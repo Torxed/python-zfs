@@ -5,8 +5,14 @@ import struct
 import zlib
 import binascii
 
-from .. import epoll, EPOLLIN, EPOLLHUP
-from ..models import ZFSFrame, ZFSSnapshotChunk, Ethernet, IPv4, UDP
+from ..models import (
+	ZFSChunk,
+	ZFSFullDataset,
+	ZFSSnapshotDelta,
+	Ethernet,
+	IPv4,
+	UDP
+)
 from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
 
@@ -21,8 +27,8 @@ def unpack_snapshot_frame(frame):
 		"index" : struct.unpack('B', frame[1:2])[0],
 		"crc_data" : struct.unpack('I', frame[2:6])[0],
 		"data_len" : length,
-		"data" : frame[HEADER_LENGTH:HEADER_LENGTH+data_position],
-		"previous_data" : frame[HEADER_LENGTH+data_position:]
+		"data" : frame[HEADER_LENGTH:HEADER_LENGTH + data_position],
+		"previous_data" : frame[HEADER_LENGTH + data_position:]
 	}
 
 class Reciever:
@@ -42,8 +48,8 @@ class Reciever:
 		promisciousMode = promisc(self.socket, bytes(storage['arguments'].interface, 'UTF-8'))
 		promisciousMode.on()
 
-		self.poller = epoll()
-		self.poller.register(self.socket.fileno(), EPOLLIN | EPOLLHUP)
+		self.poller = select.epoll()
+		self.poller.register(self.socket.fileno(), select.EPOLLIN | select.EPOLLHUP)
 
 		# self.socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 		# self.socket.setblocking(0)
@@ -64,7 +70,6 @@ class Reciever:
 	
 				for fileno, event in self.poller.poll(0.025): # Retry up to 1 second
 					data, auxillary_data_raw, flags, addr = self.socket.recvmsg(65535, socket.CMSG_LEN(4096))
-					
 					# data, sender = self.socket.recvfrom(self.buffer_size)
 					data_recieved = True
 
@@ -79,6 +84,12 @@ class Reciever:
 					# 	}
 
 	def unpack_frame(self, data):
+		if len(data) < 34:
+			"""
+			Not a valid IPv4 packet so no point in parsing.
+			"""
+			return None
+
 		ip_segments = struct.unpack("!12s4s4s", data[14:34])
 
 		ip_source, ip_dest = [
@@ -93,8 +104,8 @@ class Reciever:
 		mac_dest, mac_source = (binascii.hexlify(mac) for mac in ethernet_segments[:2])
 		
 		frame = Ethernet(
-			source=':'.join(mac_source[i:i+2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
-			destination=':'.join(mac_dest[i:i+2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
+			source=':'.join(mac_source[i:i + 2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
+			destination=':'.join(mac_dest[i:i + 2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
 			payload_type=binascii.hexlify(ethernet_segments[2]),
 			payload=IPv4(
 				source=ip_source,
@@ -104,7 +115,7 @@ class Reciever:
 					destination=destination_port,
 					length=udp_payload_len,
 					checksum=udp_checksum,
-					payload=data[42:42+udp_payload_len]
+					payload=data[42:42 + udp_payload_len]
 				)
 			)
 		)
@@ -112,30 +123,59 @@ class Reciever:
 		if frame.payload.payload.destination == self.port and (self.addr == '' or self.addr == frame.payload.destination):
 			data = frame.payload.payload.payload
 
-			transfer_id = struct.unpack('B', data[0:1])[0]
-			frame_index = struct.unpack('B', data[1:2])[0]
-			checksum = struct.unpack('I', data[2:6])[0]
-			length = struct.unpack('H', data[6:8])[0]
-			recieved_data = data[8:8+length]
-			
-			# print(len(data), data)
-			# print(data[0:1], transfer_id)
-			# print(data[1:2], frame_index)
-			# print(data[2:6], checksum)
-			# print(data[6:8], length)
-			# print('DATA:', data[8:8+length])
-			# print(data[8+length:8+length+4])
+			frame_type = struct.unpack('B', data[0:1])[0]
+			if frame_type == 1:
+				"""
+				Frame type 2 is a pre-flight frame of a full sync of a dataset.
+				This frame will contain:
+					* Transfer ID (a session if you will)
+					* Volume/Dataset name
+				"""
+				transfer_id = struct.unpack('B', data[1:2])[0]
+				volume_name_len = struct.unpack('B', data[2:3])[0]
+				volume = data[3:3 + volume_name_len]
 
-			previous_checksum = struct.unpack('I', data[8+length:8+length+4])[0]
+				yield ZFSFullDataset(
+					transfer_id=transfer_id,
+					name=volume.decode('UTF-8')
+				)
+			elif frame_type == 2:
+				"""
+				Frame type 1 is a pre-flight frame of a delta between two snapshots.
+				This frame will contain:
+					* Transfer ID (a session if you will)
+					* Volume/Dataset name
+				"""
+				transfer_id = struct.unpack('B', data[1:2])[0]
+				volume_name_len = struct.unpack('B', data[2:3])[0]
+				volume = data[3:3 + volume_name_len]
 
-			yield ZFSSnapshotChunk(
-				transfer_id = transfer_id,
-				frame_index = frame_index,
-				checksum = checksum,
-				length = length,
-				data = recieved_data,
-				previous_checksum = previous_checksum
-			)
+				yield ZFSSnapshotDelta(
+					transfer_id=transfer_id,
+					name=volume.decode('UTF-8')
+				)
+			elif frame_type == 3:
+				"""
+				Fram type 3 is chunk data for a given session.
+				The given session is defined based on the
+				pre-flight frame that was sent to initate the session.
+				"""
+				transfer_id = struct.unpack('B', data[1:2])[0]
+				frame_index = struct.unpack('B', data[2:3])[0]
+				checksum = struct.unpack('I', data[3:7])[0]
+				length = struct.unpack('H', data[7:9])[0]
+				recieved_data = data[9:9 + length]
+				
+				previous_checksum = struct.unpack('I', data[9 + length:9 + length + 4])[0]
+
+				yield ZFSChunk(
+					transfer_id=transfer_id,
+					frame_index=frame_index,
+					checksum=checksum,
+					length=length,
+					data=recieved_data,
+					previous_checksum=previous_checksum
+				)
 
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:

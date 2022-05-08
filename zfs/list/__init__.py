@@ -6,6 +6,10 @@ from ..models import (
 	Snapshot,
 	Volume
 )
+from .volumes import (
+	volumes,
+	get_volume
+)
 
 def snapshots():
 	worker = SysCommandWorker('zfs list -H -t snapshot')
@@ -32,22 +36,3 @@ def last_snapshots(namespace :Namespace, n :int = 2):
 	all_snapshots = list(reversed([snapshot for snapshot in snapshots() if snapshot.name.startswith(namespace.name)]))
 
 	return all_snapshots[:n]
-
-def volumes() -> Iterator[Volume]:
-	worker = SysCommandWorker('zfs list -H')
-	while worker.is_alive():
-		for line in worker:
-			name, used, avail, refer, mountpoint = line.strip(b'\r\n').decode('UTF-8').split('\t')
-			
-			yield Volume(**{
-				"name": name,
-				"used": used if used != b'-' else None,
-				"avail": avail if avail != b'-' else None,
-				"refer": refer if refer != b'-' else None,
-				"mountpoint": mountpoint if mountpoint != b'-' else None
-			})
-
-def get_volume(name :str) -> Volume:
-	for volume in volumes():
-		if volume.name.startswith(name):
-			return volume

@@ -1,6 +1,6 @@
-import logging
 import os
 import sys
+import pathlib
 
 from .storage import storage
 
@@ -36,6 +36,7 @@ def stylize_output(text: str, *opts :str, **kwargs) -> str:
 		'orange' : '8;5;208',    # Extended 256-bit colors (not always supported)
 		'darkorange' : '8;5;202',# https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#256-colors
 		'gray' : '8;5;246',
+		'grey' : '8;5;246',
 		'darkgray' : '8;5;240',
 		'lightgray' : '8;5;256'
 	}
@@ -77,13 +78,13 @@ def log(*args, **kwargs):
 		absolute_logfile = os.path.join(storage.get('LOG_PATH', './'), filename)
 
 		try:
-			Path(absolute_logfile).parents[0].mkdir(exist_ok=True, parents=True)
+			pathlib.Path(absolute_logfile).parents[0].mkdir(exist_ok=True, parents=True)
 			with open(absolute_logfile, 'a') as log_file:
 				log_file.write("")
 		except PermissionError:
 			# Fallback to creating the log file in the current folder
-			err_string = f"Not enough permission to place log file at {absolute_logfile}, creating it in {Path('./').absolute() / filename} instead."
-			absolute_logfile = Path('./').absolute() / filename
+			err_string = f"Not enough permission to place log file at {absolute_logfile}, creating it in {pathlib.Path('./').absolute() / filename} instead."
+			absolute_logfile = pathlib.Path('./').absolute() / filename
 			absolute_logfile.parents[0].mkdir(exist_ok=True)
 			absolute_logfile = str(absolute_logfile)
 			storage['LOG_PATH'] = './'
