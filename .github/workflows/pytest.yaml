@@ -23,7 +23,7 @@ jobs:
             - run: pacman --noconfirm -Syu git base-devel sudo python python-pytest python-pip python-pydantic parted
             # Setup build user
             - run: useradd -m -G wheel -s /bin/bash builduser
-            - run: echo format("builduser ALL=(ALL:ALL) NOPASSWD{0} ALL", ':') > /etc/sudoers.d/01_builduser
+            - run: echo format('builduser ALL=(ALL:ALL) NOPASSWD{0} ALL', ':') > /etc/sudoers.d/01_builduser
             - run: git clone https://aur.archlinux.org/yay-bin.git /yay-bin
             - run: chown builduser:builduser /yay-bin
             - run: su - builduser -c 'cd /yay-bin; makepkg -si --noconfirm'
