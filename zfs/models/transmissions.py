@@ -11,6 +11,10 @@ class ZFSFrame(pydantic.BaseModel):
 	data :bytes
 	previous_checksum :Optional[int] = 0 # I
 
+	@property
+	def id(self):
+		return self.transfer_id
+
 	def pack(self):
 		return (
 			struct.pack('B', 3) # We are a data chunk
@@ -41,7 +45,7 @@ class ZFSFrame(pydantic.BaseModel):
 	def checksum(self):
 		return zlib.crc32(self.data) & 0xffffffff
 
-class ZFSSnapshotChunk(pydantic.BaseModel):
+class ZFSChunk(pydantic.BaseModel):
 	transfer_id :int # B
 	frame_index :int # B
 	checksum :int # I
@@ -53,10 +57,22 @@ class ZFSSnapshotChunk(pydantic.BaseModel):
 	def checksum(cls, value):
 		return value
 
+	@property
+	def id(self):
+		return self.transfer_id
+
 class ZFSFullDataset(pydantic.BaseModel):
 	transfer_id :int # B
 	name :str
 
+	@property
+	def id(self):
+		return self.transfer_id
+
 class ZFSSnapshotDelta(pydantic.BaseModel):
 	transfer_id :int
 	name :str
+
+	@property
+	def id(self):
+		return self.transfer_id

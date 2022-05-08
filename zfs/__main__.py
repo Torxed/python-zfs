@@ -63,9 +63,14 @@ if args.full_sync:
 		zfs.networking.deliver(transfer_id=1, stream=stream, addressing=postnord)
 
 elif args.reciever:
-	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as stream:
-		print(stream)
+	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as listener:
 		while True:
-			for zfs_snapshot_chunk in stream:
-				print('Chunk:', repr(zfs_snapshot_chunk))
-				#snapshot.restore(zfs_snapshot_chunk)
+			for zfs_recieved_obj in listener:
+				if type(zfs_recieved_obj) in (zfs.ZFSSnapshotDelta, zfs.ZFSFullDataset):
+					if zfs.has_worker_for(zfs_recieved_obj) is False:
+						zfs.setup_worker(zfs_recieved_obj)
+
+				elif type(zfs_recieved_obj) == zfs.ZFSChunk:
+					zfs.log(f'Got a chunk: {repr(zfs_recieved_obj)}', level=logging.INFO, fg="orange")
+
+					zfs.workers[zfs_recieved_obj.id].restore(zfs_recieved_obj)

@@ -5,7 +5,7 @@ from .snapshots import (
 )
 from .transmissions import (
 	ZFSFrame,
-	ZFSSnapshotChunk,
+	ZFSChunk,
 	ZFSFullDataset,
 	ZFSSnapshotDelta
 )

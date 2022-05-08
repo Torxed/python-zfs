@@ -55,7 +55,7 @@ class Image:
 		volume = bytes(self.volume.name, 'UTF-8')
 
 		return (
-			struct.pack('B', 2) # Frame type
+			struct.pack('B', 1) # Frame type 1 = Full Image
 			+struct.pack('B', transfer_id) # Which session are we initating
 			+struct.pack('B', len(volume)) + volume # The volume name
 		)
