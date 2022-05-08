@@ -19,7 +19,7 @@ jobs:
             # --cap-add=MKNOD --device-cgroup-rule="b 7:* rmw"
         steps:
             - uses: actions/checkout@v2
-            - run: pacman --noconfirm -Syu sudo python python-pip python-pydantic parted
+            - run: pacman --noconfirm -Syu base-devel sudo python python-pip python-pydantic parted
             - run: python -m pip install --upgrade pip
             - run: ls -lah
             - run: pwd
