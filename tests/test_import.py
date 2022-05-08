@@ -51,7 +51,7 @@ def test_sending_full_image():
 		for obj in files:
 			os.chown(os.path.join(root, obj), uid, gid)
 
-	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/yay-bin/; makepkg -si --noconfirm", peak_output=True)
+	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/yay-bin/; makepkg -si --noconfirm'", peak_output=True)
 
 	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils.tar.gz")
 	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
