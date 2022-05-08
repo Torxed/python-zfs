@@ -14,7 +14,7 @@ pool_name = 'testpool_python_zfs'
 def test_sending_full_image():
 	import zfs
 
-	print(zfs.SysCommand('ls -l /usr/bin/zfs').decode('UTF-8'))
+	# print(zfs.SysCommand('ls -l /usr/bin/zfs').decode('UTF-8'))
 
 	build_root = pathlib.Path('/usr/aur-builds/').resolve()
 	build_root.mkdir(parents=True, exist_ok=True)
@@ -65,6 +65,9 @@ def test_sending_full_image():
 	os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
 
 	print(zfs.SysCommand(f"ls -la /home/builduser/.gnupg/").decode('UTF-8'))
+
+	# Not sure why this is there.
+	pathlib.Path('/usr/bin/zfs').unlink()
 
 	for package in ['zfs-utils', 'zfs-linux']:
 		for root, dirs, files in os.walk(f"{build_root}/{package}"):
