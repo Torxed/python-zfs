@@ -66,7 +66,7 @@ def test_sending_full_image():
 
 	with open('/home/builduser/.gnupg/gpg.conf', 'w') as fh:
 		fh.write('keyserver-options auto-key-retrieve\n')
-		# fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
+		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
 
 	zfs.SysCommand(f"modprobe zfs")
 	zfs.SysCommand(f"truncate -s 100M {build_root}/testimage.img")
