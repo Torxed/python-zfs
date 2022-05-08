@@ -17,41 +17,41 @@ def test_sending_full_image():
 	# print(zfs.SysCommand('/usr/bin/zfs --help').decode('UTF-8'))
 
 
-	build_root = pathlib.Path('/usr/aur-builds/').resolve()
-	build_root.mkdir(parents=True, exist_ok=True)
+	# build_root = pathlib.Path('/usr/aur-builds/').resolve()
+	# build_root.mkdir(parents=True, exist_ok=True)
 
-	try:
-		zfs.SysCommand(f"zpool destroy {pool_name}")
-	except (zfs.exceptions.SysCallError, zfs.exceptions.RequirementError):
-		"""
-		Either we have never installed zfs-linux before,
-		or the pool didn't exist.
-		"""
-		pass
+	# try:
+	# 	zfs.SysCommand(f"zpool destroy {pool_name}")
+	# except (zfs.exceptions.SysCallError, zfs.exceptions.RequirementError):
+	# 	"""
+	# 	Either we have never installed zfs-linux before,
+	# 	or the pool didn't exist.
+	# 	"""
+	# 	pass
 
-	try:
-		zfs.SysCommand('id -u builduser')
-	except zfs.exceptions.SysCallError:
-		# Create builduser if not exists, no password.
-		zfs.SysCommand('useradd -m -G wheel -s /bin/bash builduser')
+	# try:
+	# 	zfs.SysCommand('id -u builduser')
+	# except zfs.exceptions.SysCallError:
+	# 	# Create builduser if not exists, no password.
+	# 	zfs.SysCommand('useradd -m -G wheel -s /bin/bash builduser')
 
-	if (sudoers_existed := pathlib.Path('/etc/sudoers.d/01_builduser').exists()) is False:
-		with open('/etc/sudoers.d/01_builduser', 'w') as fh:
-			fh.write("builduser ALL=(ALL:ALL) NOPASSWD: ALL\n")
+	# if (sudoers_existed := pathlib.Path('/etc/sudoers.d/01_builduser').exists()) is False:
+	# 	with open('/etc/sudoers.d/01_builduser', 'w') as fh:
+	# 		fh.write("builduser ALL=(ALL:ALL) NOPASSWD: ALL\n")
 
-	uid = pwd.getpwnam("builduser").pw_uid
-	gid = grp.getgrnam("wheel").gr_gid
+	# uid = pwd.getpwnam("builduser").pw_uid
+	# gid = grp.getgrnam("wheel").gr_gid
 
-	zfs.SysCommand(f"git clone https://aur.archlinux.org/yay-bin.git {build_root}/yay-bin")
+	# zfs.SysCommand(f"git clone https://aur.archlinux.org/yay-bin.git {build_root}/yay-bin")
 
-	os.chown(str(build_root), uid, gid)
+	# os.chown(str(build_root), uid, gid)
 
-	for root, dirs, files in os.walk(f"{build_root}/yay-bin"):
-		os.chown(root, uid, gid)
-		for obj in files:
-			os.chown(os.path.join(root, obj), uid, gid)
+	# for root, dirs, files in os.walk(f"{build_root}/yay-bin"):
+	# 	os.chown(root, uid, gid)
+	# 	for obj in files:
+	# 		os.chown(os.path.join(root, obj), uid, gid)
 
-	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/yay-bin/; makepkg -si --noconfirm'", peak_output=True)
+	# zfs.SysCommand(f"su - builduser -c 'cd {build_root}/yay-bin/; makepkg -si --noconfirm'", peak_output=True)
 
 	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils.tar.gz")
 	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
@@ -90,8 +90,8 @@ def test_sending_full_image():
 	# 	zfs.log(f"Building {package}, this might take time..", fg="orange", level=logging.WARNING)
 	# 	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/{package}/; gpg --recv-keys 6AD860EED4598027; makepkg -si -f --noconfirm'", working_directory=f"{build_root}/zfs-linux/", peak_output=True)
 
-	if sudoers_existed is False:
-		pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
+	# if sudoers_existed is False:
+	# 	pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
 
 	zfs.SysCommand(f"modprobe zfs")
 	zfs.SysCommand(f"truncate -s 100M {build_root}/testimage.img")
