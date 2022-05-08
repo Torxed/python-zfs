@@ -11,6 +11,8 @@ jobs:
             - uses: actions/checkout@v2
             - run: pacman --noconfirm -Syu python python-pip parted
             - run: python -m pip install --upgrade pip
+            - run: ls -lah
+            - run: pwd
             - run: pip install .
             - run: pip install pytest
             - name: Test with pytest
