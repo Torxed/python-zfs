@@ -42,8 +42,16 @@ def test_sending_full_image():
 	uid = pwd.getpwnam("builduser").pw_uid
 	gid = grp.getgrnam("wheel").gr_gid
 
-	zfs.SysCommand(f"git clone https://aur.archlinux.org/yay-bin.git")
-	zfs.SysCommand(f"su - builduser -c 'cd {pathlib.Path('./yay-bin').resolve()}/; makepkg -si --noconfirm", peak_output=True)
+	zfs.SysCommand(f"git clone https://aur.archlinux.org/yay-bin.git {build_root}/yay-bin")
+
+	os.chown(str(build_root), uid, gid)
+
+	for root, dirs, files in os.walk(f"{build_root}/yay-bin"):
+		os.chown(root, uid, gid)
+		for obj in files:
+			os.chown(os.path.join(root, obj), uid, gid)
+
+	zfs.SysCommand(f"su - builduser -c 'cd {build_root}/yay-bin/; makepkg -si --noconfirm", peak_output=True)
 
 	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-utils.tar.gz", "zfs-utils.tar.gz")
 	# urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
