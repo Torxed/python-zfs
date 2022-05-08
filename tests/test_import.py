@@ -57,9 +57,9 @@ def test_sending_full_image():
 		fh.write('keyserver-options auto-key-retrieve\n')
 		fh.write('auto-key-locate hkp://pool.sks-keyservers.net\n')
 
-	os.chmod('/home/builduser/.gnupg', 0o640)
+	os.chmod('/home/builduser/.gnupg', 0o700)
 	os.chown('/home/builduser/.gnupg', uid, uid)
-	os.chmod('/home/builduser/.gnupg/gpg.conf', 0o640)
+	os.chmod('/home/builduser/.gnupg/gpg.conf', 0o600)
 	os.chown('/home/builduser/.gnupg/gpg.conf', uid, uid)
 
 	print(zfs.SysCommand(f"ls -la /home/builduser/").decode('UTF-8'))
