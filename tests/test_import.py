@@ -8,16 +8,13 @@ import shutil
 import time
 import logging
 
+pool_name = 'testpool_python_zfs'
+
 def test_sending_full_image():
 	import zfs
 
-	pool_name = 'testpool_python_zfs'
-
 	build_root = pathlib.Path('/usr/aur-builds/').resolve()
 	build_root.mkdir(parents=True, exist_ok=True)
-
-	uid = pwd.getpwnam("builduser").pw_uid
-	gid = grp.getgrnam("wheel").gr_gid
 
 	try:
 		zfs.SysCommand(f"zpool destroy {pool_name}")
@@ -33,6 +30,9 @@ def test_sending_full_image():
 	if (sudoers_existed := pathlib.Path('/etc/sudoers.d/01_builduser').exists()) is False:
 		with open('/etc/sudoers.d/01_builduser', 'w') as fh:
 			fh.write("builduser ALL=(ALL:ALL) NOPASSWD: ALL\n")
+
+	uid = pwd.getpwnam("builduser").pw_uid
+	gid = grp.getgrnam("wheel").gr_gid
 
 	urllib.request.urlretrieve("https://aur.archlinux.org/cgit/aur.git/snapshot/zfs-linux.tar.gz", "zfs-linux.tar.gz")
 	import tarfile
