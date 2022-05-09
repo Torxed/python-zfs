@@ -19,8 +19,9 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - run: apt-get update
-            - run: apt-get upgrade
+            - run: apt-get -y upgrade
             - run: apt-cache search python
+            - run: apt install -y python3.10
             - run: python --version
             - run: apt install zfsutils-linux
         # container:
