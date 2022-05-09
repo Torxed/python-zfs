@@ -27,6 +27,10 @@ def clear_vt100_escape_codes(data :Union[bytes, str]):
 
 	return data
 
+def generate_transmission_id():
+	storage['transfer_id'] = storage.get('transmission_id', 0) + 1
+	return storage['transfer_id'] - 1
+
 def pid_exists(pid: int) -> bool:
 	try:
 		return any(subprocess.check_output(['/usr/bin/ps', '--no-headers', '-o', 'pid', '-p', str(pid)]).strip())

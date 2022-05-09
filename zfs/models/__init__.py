@@ -3,18 +3,16 @@ from .snapshots import (
 	Namespace,
 	Volume
 )
-from .transmissions import (
-	ZFSFrame,
-	ZFSChunk,
-	ZFSFullDataset,
-	ZFSSnapshotDelta
-)
-from .networking import (
-	Ethernet_IPv4,
-	Ethernet_Unknown,
+from .zfsframe import ZFSFrame
+from .zfschunk import ZFSChunk
+from .zfspool import ZFSPool
+from .zfssnapshotdelta import ZFSSnapshotDelta
+
+from .netnode import (
 	NetNodeAddress,
-	NetNode,
-	Ethernet,
-	UDP,
-	IPv4
+	NetNode
 )
+
+from .ethernet import Ethernet
+from .udp import UDP
+from .ipv4 import IPv4

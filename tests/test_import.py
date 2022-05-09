@@ -17,7 +17,7 @@ def test_sending_full_image():
 	# print(zfs.SysCommand('/usr/bin/zfs --help').decode('UTF-8'))
 
 
-	# build_root = pathlib.Path('/usr/aur-builds/').resolve()
+	build_root = pathlib.Path('./').resolve()
 	# build_root.mkdir(parents=True, exist_ok=True)
 
 	# try:

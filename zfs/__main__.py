@@ -57,14 +57,14 @@ if args.full_sync:
 		udp_port=zfs.storage['arguments'].udp_port
 	)
 
-	with zfs.Image(zfs.Volume(name=args.pool)) as stream:
-		zfs.networking.deliver(transfer_id=1, stream=stream, addressing=postnord)
+	with zfs.Pool(zfs.ZFSPool(name=args.pool, transfer_id=1)) as stream:
+		zfs.networking.send(stream=stream, addressing=postnord)
 
 elif args.reciever:
 	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as listener:
 		while True:
 			for zfs_recieved_obj in listener:
-				if type(zfs_recieved_obj) in (zfs.ZFSSnapshotDelta, zfs.ZFSFullDataset):
+				if type(zfs_recieved_obj) in (zfs.ZFSSnapshotDelta, zfs.ZFSPool):
 					if zfs.has_worker_for(zfs_recieved_obj) is False:
 						zfs.setup_worker(zfs_recieved_obj)
 
