@@ -13,6 +13,9 @@ name: pytest test validation
 jobs:
     pytest:
         runs-on: ubuntu-latest
+        steps:
+            - run: apt install -y zfsutils-linux
+            - run: /sbin/modprobe zfs
         container:
             image: ubuntu:devel
             options: --privileged
