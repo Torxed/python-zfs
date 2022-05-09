@@ -12,7 +12,10 @@ concurrency:
 name: pytest test validation
 jobs:
     pytest:
-        runs-on: ubuntu-devel
+        runs-on: ubuntu-latest
+        container:
+            image: ubuntu:devel
+            options: --privileged
         steps:
             - uses: actions/checkout@v2
             - run: python --version
