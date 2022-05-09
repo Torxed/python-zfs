@@ -95,6 +95,22 @@ class DeltaReader:
 			self.worker.stdin.close()
 			self.worker.stderr.close()
 
+	def unpack_snapshot_frame(self, frame):
+		HEADER_LENGTH = 8
+
+		length = struct.unpack('H', frame[6:HEADER_LENGTH])[0]
+		data_position = length # The header is 8 bytes
+		
+		return {
+			"transfer_id" : struct.unpack('B', frame[0:1])[0],
+			"index" : struct.unpack('B', frame[1:2])[0],
+			"crc_data" : struct.unpack('I', frame[2:6])[0],
+			"data_len" : length,
+			"data" : frame[HEADER_LENGTH:HEADER_LENGTH + data_position],
+			"previous_data" : frame[HEADER_LENGTH + data_position:]
+		}
+
+
 	def restore(self, frame):
 		if not self.worker:
 			if storage['arguments'].dummy_data:

@@ -7,7 +7,7 @@ import binascii
 
 from ..models import (
 	ZFSChunk,
-	ZFSFullDataset,
+	ZFSPool,
 	ZFSSnapshotDelta,
 	Ethernet,
 	IPv4,
@@ -15,21 +15,6 @@ from ..models import (
 )
 from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
-
-def unpack_snapshot_frame(frame):
-	HEADER_LENGTH = 8
-
-	length = struct.unpack('H', frame[6:HEADER_LENGTH])[0]
-	data_position = length # The header is 8 bytes
-	
-	return {
-		"transfer_id" : struct.unpack('B', frame[0:1])[0],
-		"index" : struct.unpack('B', frame[1:2])[0],
-		"crc_data" : struct.unpack('I', frame[2:6])[0],
-		"data_len" : length,
-		"data" : frame[HEADER_LENGTH:HEADER_LENGTH + data_position],
-		"previous_data" : frame[HEADER_LENGTH + data_position:]
-	}
 
 class Reciever:
 	def __init__(self, addr, port, buffer_size=1392):
@@ -135,7 +120,7 @@ class Reciever:
 				volume_name_len = struct.unpack('B', data[2:3])[0]
 				volume = data[3:3 + volume_name_len]
 
-				yield ZFSFullDataset(
+				yield ZFSPool(
 					transfer_id=transfer_id,
 					name=volume.decode('UTF-8')
 				)

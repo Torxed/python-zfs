@@ -1,2 +1,2 @@
-from .delivery import deliver as deliver
+from .sending import send
 from .recieving import Reciever

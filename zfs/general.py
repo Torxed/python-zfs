@@ -27,6 +27,10 @@ def clear_vt100_escape_codes(data :Union[bytes, str]):
 
 	return data
 
+def generate_transmission_id():
+	storage['transfer_id'] = storage.get('transmission_id', 0) + 1
+	return storage['transfer_id'] - 1
+
 def pid_exists(pid: int) -> bool:
 	try:
 		return any(subprocess.check_output(['/usr/bin/ps', '--no-headers', '-o', 'pid', '-p', str(pid)]).strip())
@@ -43,6 +47,12 @@ def locate_binary(name):
 
 	raise RequirementError(f"Binary {name} does not exist.")
 
+def is_vm() -> bool:
+	try:
+		return b"none" not in b"".join(SysCommand("systemd-detect-virt")).lower()
+	except SysCallError as error:
+		log(f"System is not running in a VM: {error}", level=logging.DEBUG)
+	return None
 
 class FakePopen:
 	def __init__(self, fake_data :pathlib.Path):
@@ -239,7 +249,6 @@ class SysCommandWorker:
 		#   only way to get the traceback without loosing it.
 
 		self.pid, self.child_fd = pty.fork()
-		os.chdir(old_dir)
 
 		# https://stackoverflow.com/questions/4022600/python-pty-fork-how-does-it-work
 		if not self.pid:
@@ -258,6 +267,9 @@ class SysCommandWorker:
 				log(f"{self.cmd[0]} does not exist.", level=logging.ERROR, fg="red")
 				self.exit_code = 1
 				return False
+		else:
+			# Only parent process chdir back to the original destination
+			os.chdir(old_dir)
 
 		self.started = time.time()
 		self.poll_object.register(self.child_fd, select.EPOLLIN | select.EPOLLHUP)
@@ -344,7 +356,14 @@ class SysCommand:
 		if self.session:
 			return self.session
 
-		with SysCommandWorker(self.cmd, callbacks=self._callbacks, peak_output=self.peak_output, environment_vars=self.environment_vars, remove_vt100_escape_codes_from_lines=self.remove_vt100_escape_codes_from_lines) as session:
+		with SysCommandWorker(
+			self.cmd,
+			callbacks=self._callbacks,
+			peak_output=self.peak_output,
+			environment_vars=self.environment_vars,
+			remove_vt100_escape_codes_from_lines=self.remove_vt100_escape_codes_from_lines,
+			working_directory=self.working_directory
+			) as session:
 			if not self.session:
 				self.session = session
 

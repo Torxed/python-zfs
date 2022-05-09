@@ -6,7 +6,7 @@ from ..storage import storage
 from ..logger import log
 from .common import promisc, ETH_P_ALL	, SOL_PACKET, PACKET_AUXDATA
 
-def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
+def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
 	# sender = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 	transmission_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
 	transmission_socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
@@ -19,7 +19,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2, chun
 	frame_index = 0
 	previous_data = None
 
-	stream_information = stream.info_struct(transfer_id)
+	stream_information = stream.pre_flight_info
 	log(f"Telling reciever to set up {repr(stream)}, resending this {resend_buffer} time(s)", fg="gray", level=logging.INFO)
 	for resend in range(resend_buffer):
 		frame = Ethernet(
@@ -43,11 +43,13 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2, chun
 		# previous_checksum :int # I
 
 		payload = ZFSFrame(
-			transfer_id=transfer_id,
+			transfer_id=stream.transfer_id,
 			frame_index=frame_index,
 			data=data,
 			previous_checksum=zlib.crc32(previous_data if previous_data else b'')
 		)
+
+		log(f'Sending chunk: {repr(payload)}', level=logging.INFO, fg="orange")
 
 		frame = Ethernet(
 			source=str(addressing.source.mac_address),
@@ -60,7 +62,7 @@ def deliver(transfer_id, stream, addressing, on_send=None, resend_buffer=2, chun
 			)
 		)
 
-		log(f'Sending frame: {repr(frame)}', fg="green", level=logging.INFO)
+		# log(f'Sending frame: {repr(frame)}', fg="green", level=logging.INFO)
 
 		if on_send:
 			frame = on_send(frame)
