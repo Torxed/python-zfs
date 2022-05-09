@@ -46,4 +46,5 @@ jobs:
             # Install python-zfs and run pytest
             - run: pip3 install .
             - name: Test with pytest
-              run: python3.10 -m pytest
+              run: python3.10 -m pytest || exit 0
+            - run: cat cmd_history.txt

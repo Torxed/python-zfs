@@ -102,8 +102,9 @@ def log(*args, **kwargs):
 			# In that case, we'll drop it.
 			return None
 
-	# Finally, print the log unless we skipped it based on level.
-	# We use sys.stdout.write()+flush() instead of print() to try and
-	# fix issue #94
-	sys.stdout.write(f"{string}\n")
-	sys.stdout.flush()
+	if kwargs.get('mute_output', False) is False:
+		# Finally, print the log unless we skipped it based on level.
+		# We use sys.stdout.write()+flush() instead of print() to try and
+		# fix issue #94
+		sys.stdout.write(f"{string}\n")
+		sys.stdout.flush()
