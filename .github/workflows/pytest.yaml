@@ -18,10 +18,11 @@ jobs:
             options: --privileged
         steps:
             - uses: actions/checkout@v2
+            - run: apt install python
+            - run: apt-get update
+            - run: apt-get upgrade
             - run: python --version
-            - run: sudo apt-get update
-            - run: sudo apt-get upgrade
-            - run: sudo apt install zfsutils-linux
+            - run: apt install zfsutils-linux
         # container:
         #     image: archlinux:latest
         #     options: --privileged
@@ -43,6 +44,6 @@ jobs:
         #     # - run: reboot
         #     # - run: modprobe zfs
             # Install python-zfs and run pytest
-            - run: sudo pip install .
+            - run: pip install .
             - name: Test with pytest
-              run: sudo python -m pytest
+              run: python -m pytest
