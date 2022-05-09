@@ -30,7 +30,7 @@ class Image:
 		if storage['arguments'].dummy_data:
 			self.worker = FakePopen(storage['arguments'].dummy_data)
 		else:
-			self.worker = Popen(["zfs", "send", "-c", self.recursive, self.volume], shell=False, stdout=PIPE, stderr=PIPE)
+			self.worker = Popen(["zfs", "send", "-c", self.recursive, self.volume.name], shell=False, stdout=PIPE, stderr=PIPE)
 		return self
 
 	def __exit__(self, *args):
