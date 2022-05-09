@@ -24,6 +24,6 @@ class ZFSChunk(pydantic.BaseModel):
 			+ f", frame_index={self.frame_index}"
 			+ f", checksum={self.checksum} ({zlib.crc32(self.data) & 0xffffffff == self.checksum})"
 			+ f", length={self.length}"
-			+ f", data={self.data!r}"
+			+ f", data={zlib.compress(self.data)!r}"
 			+ f", previous_checksum={self.previous_checksum}"
 		)

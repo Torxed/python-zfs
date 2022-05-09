@@ -58,6 +58,8 @@ class Pool:
 class PoolRestore:
 	def __init__(self, pool :ZFSPool):
 		self.worker = None
+		self.pollobj = select.epoll()
+		self.fileno = None
 		self.pool = pool
 		self.restored = []
 
@@ -76,6 +78,8 @@ class PoolRestore:
 			print(args)
 
 		if self.worker:
+			if self.fileno:
+				self.pollobj.unregister(self.fileno)
 			self.worker.stdout.close()
 			self.worker.stdin.close()
 			self.worker.stderr.close()
@@ -91,11 +95,13 @@ class PoolRestore:
 					shell=False,
 					stdout=subprocess.PIPE,
 					stdin=subprocess.PIPE,
-					stderr=subprocess.PIPE
+					stderr=subprocess.STDOUT
 				)
+				self.fileno = self.worker.stdout.fileno()
+				self.pollobj.register(self.fileno, select.EPOLLIN|select.EPOLLHUP)
 
 		if frame.frame_index in self.restored:
-			log(f"Chunk is already restored: {frame}", level=logging.INFO, fg="red")
+			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
 			return None
 
 		self.restored = self.restored[-4:] + [frame.frame_index]
@@ -105,10 +111,5 @@ class PoolRestore:
 		self.worker.stdin.flush()
 
 		if not storage['arguments'].dummy_data:
-			for fileno in select.select([self.worker.stdout.fileno()], [], [], 0.2)[0]:
-				output = self.worker.stdout.read(1024).decode('UTF-8')
-				if output:
-					print(output)
-
-			for fileno in select.select([self.worker.stderr.fileno()], [], [], 0.2)[0]:
-				raise ValueError(self.worker.stderr.read(1024))
+			if self.pollobj.poll(0.001):
+				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
