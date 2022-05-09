@@ -23,6 +23,7 @@ jobs:
             - run: apt install -y python3.10 python3-pip python3-pytest python3-pydantic
             - run: python3.10 --version
             - run: apt install -y zfsutils-linux
+            - run: /sbin/modprobe zfs
         # container:
         #     image: archlinux:latest
         #     options: --privileged
