@@ -13,27 +13,30 @@ name: pytest test validation
 jobs:
     pytest:
         runs-on: ubuntu-latest
-        container:
-            image: archlinux:latest
-            options: --privileged
-            # -v /dev:/dev
-            # --cap-add=MKNOD --device-cgroup-rule="b 7:* rmw"
-        steps:
-            - uses: actions/checkout@v2
-            - run: pacman --noconfirm -Sy git base-devel sudo python python-pytest python-pip python-pydantic parted
-            # Setup build user
-            - run: useradd -m -G wheel -s /bin/bash builduser
-            - run: |
-                echo "builduser ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/01_builduser
-            # Build yay
-            - run: git clone https://aur.archlinux.org/yay-bin.git /yay-bin
-            - run: chown builduser:builduser /yay-bin
-            - run: su - builduser -c 'cd /yay-bin; makepkg -si --noconfirm'
-            # Install zfs-linux
-            # - run: su - builduser -c 'yay -S --noconfirm zfs-linux'
-            # - run: reboot
-            # - run: modprobe zfs
+            - run: apt-get update
+            - run: apt-get upgrade
+            - run: apt install zfsutils-linux
+        # container:
+        #     image: archlinux:latest
+        #     options: --privileged
+        #     # -v /dev:/dev
+        #     # --cap-add=MKNOD --device-cgroup-rule="b 7:* rmw"
+        # steps:
+        #     - uses: actions/checkout@v2
+        #     - run: pacman --noconfirm -Sy git base-devel sudo python python-pytest python-pip python-pydantic parted
+        #     # Setup build user
+        #     - run: useradd -m -G wheel -s /bin/bash builduser
+        #     - run: |
+        #         echo "builduser ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/01_builduser
+        #     # Build yay
+        #     - run: git clone https://aur.archlinux.org/yay-bin.git /yay-bin
+        #     - run: chown builduser:builduser /yay-bin
+        #     - run: su - builduser -c 'cd /yay-bin; makepkg -si --noconfirm'
+        #     # Install zfs-linux
+        #     # - run: su - builduser -c 'yay -S --noconfirm zfs-linux'
+        #     # - run: reboot
+        #     # - run: modprobe zfs
             # Install python-zfs and run pytest
-            # - run: pip install .
-            # - name: Test with pytest
-            #  run: python -m pytest
+            - run: pip install .
+            - name: Test with pytest
+              run: python -m pytest

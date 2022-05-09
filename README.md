@@ -101,3 +101,19 @@ with zfs.stream.Reciever(addr='', port=1337) as stream:
 	for zfs_snapshot_chunk in stream:
 		snapshot.restore(zfs_snapshot_chunk)
 ```
+
+# Setting up tests
+
+## Creating a pool
+
+```
+$ truncate -s 100M testimage.img
+$ zpool create -f testimage.img pool
+$ zfs create pool/testsync
+```
+
+## Importing an old pool
+
+```
+$ zpool import -d testimage.img pool
+```
