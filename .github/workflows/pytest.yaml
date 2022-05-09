@@ -18,9 +18,9 @@ jobs:
             options: --privileged
         steps:
             - uses: actions/checkout@v2
-            - run: apt-cache search python
             - run: apt-get update
             - run: apt-get upgrade
+            - run: apt-cache search python
             - run: python --version
             - run: apt install zfsutils-linux
         # container:
