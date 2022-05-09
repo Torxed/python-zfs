@@ -94,8 +94,8 @@ def test_sending_full_image():
 	# 	pathlib.Path('/etc/sudoers.d/01_builduser').unlink()
 
 	# zfs.SysCommand(f"modprobe zfs")
-	zfs.SysCommand(f"truncate -s 100M {build_root}/testimage.img")
-	zfs.SysCommand(f"zpool create -f {pool_name} {build_root}/testimage.img")
+	zfs.SysCommand(f"truncate -s 100M /testimage.img")
+	zfs.SysCommand(f"zpool create -f {pool_name} /testimage.img")
 	zfs.SysCommand(f"zfs create {pool_name}/testsync")
 
 	pool = zfs.list.get_volume(f'{pool_name}/testsync')
