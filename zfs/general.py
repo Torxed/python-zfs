@@ -257,10 +257,10 @@ class SysCommandWorker:
 
 				os.execve(self.cmd[0], list(self.cmd), {**os.environ, **self.environment_vars})
 				if storage['arguments'].debug:
-					log(f"Executing: {self.cmd}", level=logging.DEBUG)
+					log(f"Executing: {self.cmd}", level=logging.DEBUG, mute_output=True)
 
 			except FileNotFoundError:
-				log(f"{self.cmd[0]} does not exist.", level=logging.ERROR, fg="red")
+				log(f"{self.cmd[0]} does not exist.", level=logging.ERROR, fg="red", mute_output=True)
 				self.exit_code = 1
 				return False
 		else:
