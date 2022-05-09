@@ -13,6 +13,7 @@ name: pytest test validation
 jobs:
     pytest:
         runs-on: ubuntu-latest
+        steps:
             - run: apt-get update
             - run: apt-get upgrade
             - run: apt install zfsutils-linux
