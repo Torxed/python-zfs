@@ -59,6 +59,7 @@ class PoolRestore:
 	def __init__(self, pool :ZFSPool):
 		self.worker = None
 		self.pool = pool
+		self.restored = []
 
 	@property
 	def name(self):
@@ -92,6 +93,12 @@ class PoolRestore:
 					stdin=subprocess.PIPE,
 					stderr=subprocess.PIPE
 				)
+
+		if frame.frame_index in self.restored:
+			log(f"Chunk is already restored: {frame}", level=logging.INFO, fg="red")
+			return None
+
+		self.restored = self.restored[-4:] + [frame.frame_index]
 
 		log(f"Restoring Pool using {repr(self.pool)}[{self.name}]", level=logging.INFO, fg="green")
 		self.worker.stdin.write(frame.data)
