@@ -14,9 +14,9 @@ jobs:
     pytest:
         runs-on: ubuntu-latest
         steps:
-            - run: apt-get update
-            - run: apt-get upgrade
-            - run: apt install zfsutils-linux
+            - run: sudo apt-get update
+            - run: sudo apt-get upgrade
+            - run: sudo apt install zfsutils-linux
         # container:
         #     image: archlinux:latest
         #     options: --privileged
@@ -38,6 +38,6 @@ jobs:
         #     # - run: reboot
         #     # - run: modprobe zfs
             # Install python-zfs and run pytest
-            - run: pip install .
+            - run: sudo pip install .
             - name: Test with pytest
-              run: python -m pytest
+              run: sudo python -m pytest
