@@ -22,7 +22,7 @@ jobs:
             - run: apt-get -y upgrade
             - run: apt install -y python3.10
             - run: python3.10 --version
-            - run: apt install zfsutils-linux
+            - run: apt install -y zfsutils-linux
         # container:
         #     image: archlinux:latest
         #     options: --privileged
