@@ -120,3 +120,4 @@ def test_sending_full_image():
 	except zfs.exceptions.SysCallError:
 		pass
 
+

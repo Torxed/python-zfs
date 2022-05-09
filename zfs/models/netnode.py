@@ -16,3 +16,4 @@ class NetNode(pydantic.BaseModel):
 
 	class Config:
 		arbitrary_types_allowed = True
+
