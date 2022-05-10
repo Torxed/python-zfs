@@ -101,3 +101,9 @@ with zfs.stream.Reciever(addr='', port=1337) as stream:
 	for zfs_snapshot_chunk in stream:
 		snapshot.restore(zfs_snapshot_chunk)
 ```
+
+## Visualize bottlenecks
+```
+$ viztracer python -m zfs --reciever --interface eth0 --framesize 9000
+```
+Load `result.json` into https://ui.perfetto.dev/ and dig in.
