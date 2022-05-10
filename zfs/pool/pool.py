@@ -3,6 +3,7 @@ import struct
 import select
 import logging
 import signal
+import time
 from ..list import snapshots
 from ..models import ZFSPool
 from ..storage import storage
@@ -105,7 +106,9 @@ class PoolRestore:
 		self.pollobj = select.epoll()
 		self.fileno = None
 		self.pool = pool
-		self.restored = []
+		self.restored = [-1]
+		self.started = time.time()
+		self.ended = None
 
 	@property
 	def name(self):
@@ -122,6 +125,9 @@ class PoolRestore:
 			print(args)
 
 		self.close()
+
+	def __repr__(self):
+		return f"PoolRestore(pool={repr(self.pool)}[{self.name}], restore_index={self.restored[-1]}"
 
 	def restore(self, frame):
 		if not self.worker:
@@ -141,20 +147,28 @@ class PoolRestore:
 
 		if frame.frame_index in self.restored:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
-			return None
+			return self.close()
+
+		if frame.frame_index != (self.restored[-1] + 1) % 255:
+			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame.frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
+			return self.close()
 
 		self.restored = self.restored[-4:] + [frame.frame_index]
 
-		log(f"Restoring Pool using {repr(self.pool)}[{self.name}]", level=logging.INFO, fg="green")
-		self.worker.stdin.write(frame.data)
-		self.worker.stdin.flush()
+		log(f"Restoring Pool using {repr(self)}", level=logging.DEBUG, fg="orange")
+		try:
+			self.worker.stdin.write(frame.data)
+			self.worker.stdin.flush()
+		except:
+			raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
 		if not storage['arguments'].dummy_data:
 			if self.pollobj.poll(0.001):
 				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
+
 	def close(self):
-		log(f'Closing restore on: {repr(self.pool)}[{self.name}] ({self.fileno})', level=logging.INFO, fg="green")
+		self.ended = time.time()
 
 		if self.worker:
 			if self.fileno:
@@ -166,3 +180,6 @@ class PoolRestore:
 			self.worker.send_signal(signal.SIGTERM)
 			self.worker.stdout.close()
 			self.worker.stdin.close()
+
+		log(f'Closing restore on: {repr(self)} ({self.ended - self.started}s elapsed)', level=logging.INFO, fg="green")
+		exit(1)

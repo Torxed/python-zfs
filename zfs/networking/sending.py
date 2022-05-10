@@ -44,7 +44,7 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
 
 		payload = ZFSFrame(
 			transfer_id=stream.transfer_id,
-			frame_index=frame_index,
+			frame_index=frame_index % 255,
 			data=data,
 			previous_checksum=zlib.crc32(previous_data if previous_data else b'')
 		)
