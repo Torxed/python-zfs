@@ -15,10 +15,10 @@ from ..general import (
 
 class Pool:
 	def __init__(self, pool_obj :ZFSPool, recursive :bool = True):
-		if '/' not in pool_obj.name:
+		if '/' in pool_obj.name:
 			raise ValueError(f"Pool() does not permit / in ZFSPool() object as it indicates a dataset.")
 
-		if '@' not in pool_obj.name:
+		if '@' in pool_obj.name:
 			raise ValueError(f"Pool() does not permit @ in ZFSPool() object as it indicates a snapshot.")
 
 		self.pool_obj = pool_obj
