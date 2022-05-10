@@ -81,7 +81,8 @@ class SysCommandWorker:
 		environment_vars :Optional[Dict[str, Any]] = None,
 		logfile :Optional[None] = None,
 		working_directory :Optional[str] = './',
-		remove_vt100_escape_codes_from_lines :bool = True):
+		remove_vt100_escape_codes_from_lines :bool = True,
+		poll_delay=0.2):
 
 		if not callbacks:
 			callbacks = {}
@@ -114,6 +115,7 @@ class SysCommandWorker:
 		self.started :Optional[float] = None
 		self.ended :Optional[float] = None
 		self.remove_vt100_escape_codes_from_lines :bool = remove_vt100_escape_codes_from_lines
+		self.poll_delay = poll_delay
 
 	def __contains__(self, key: bytes) -> bool:
 		"""
@@ -219,7 +221,7 @@ class SysCommandWorker:
 
 		if self.child_fd:
 			got_output = False
-			for fileno, event in self.poll_object.poll(0):
+			for fileno, event in self.poll_object.poll(self.poll_delay):
 				try:
 					output = os.read(self.child_fd, 8192)
 					got_output = True

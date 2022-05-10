@@ -12,7 +12,7 @@ from .volumes import (
 )
 
 def snapshots():
-	worker = SysCommandWorker('zfs list -H -t snapshot')
+	worker = SysCommandWorker('zfs list -H -t snapshot', poll_delay=0.2)
 	while worker.is_alive():
 		for line in worker:
 			name, used, avail, refer, mountpoint = line.strip(b'\r\n').decode('UTF-8').split('\t')
