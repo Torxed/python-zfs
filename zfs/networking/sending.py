@@ -6,7 +6,11 @@ from ..storage import storage
 from ..logger import log
 from .common import promisc, ETH_P_ALL	, SOL_PACKET, PACKET_AUXDATA
 
-def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
+def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
+	if chunk_length is None:
+		# Ethernet/IP/UDP headers are 42 byte (estimation)
+		chunk_length = storage['arguments'].framesize -42
+
 	# sender = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 	transmission_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
 	transmission_socket.setsockopt(SOL_PACKET, PACKET_AUXDATA, 1)
