@@ -17,6 +17,7 @@ class Pool:
 		self.pool_obj = pool_obj
 		self.recursive = "-R" if recursive else ""
 		self.worker = None
+		self.pollobj = select.epoll()
 
 	def __enter__(self):
 		if storage['arguments'].dummy_data:
@@ -30,6 +31,8 @@ class Pool:
 					raise error
 
 			self.worker = subprocess.Popen(["zfs", "send", "-c", self.pool_obj.name], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			self.pollobj.register(self.worker.fileno(), select.EPOLLIN|select.EPOLLHUP)
+
 		return self
 
 	def __exit__(self, *args):
@@ -52,6 +55,21 @@ class Pool:
 	def read(self, buf_len=692):
 		if self.is_alive():
 			return self.worker.stdout.read(buf_len)
+
+		if self.pollobj.poll(0.01):
+			return self.worker.stdout.read(buf_len)
+
+	def close(self):
+		log(f'Closing Pool on: {repr(self)}', level=logging.INFO, fg="green")
+
+		if self.worker:
+			try:
+				self.pollobj.unregister(self.worker.stdout.fileno())
+			except:
+				# No idea why this happens
+				pass
+			self.worker.stdout.close()
+			self.worker.stdin.close()
 
 	@property
 	def pre_flight_info(self):
@@ -76,7 +94,6 @@ class PoolRestore:
 		self.fileno = None
 		self.pool = pool
 		self.restored = []
-		print(' ****** INIT ****** ')
 
 	@property
 	def name(self):
