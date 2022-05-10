@@ -64,14 +64,19 @@ elif args.reciever:
 	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as listener:
 		while True:
 			for zfs_recieved_obj in listener:
-				if type(zfs_recieved_obj) in (zfs.ZFSSnapshotDelta, zfs.ZFSPool):
-					if zfs.has_worker_for(zfs_recieved_obj) is False:
-						zfs.setup_worker(zfs_recieved_obj)
+				# if type(zfs_recieved_obj) in (zfs.ZFSSnapshotDelta, zfs.ZFSPool):
+				frame_type = zfs_recieved_obj[0]
+				transfer_id = zfs_recieved_obj[1]
+				if frame_type in (1, 2):
+					if zfs.has_worker_for(transfer_id) is False:
+						zfs.setup_worker(transfer_id, zfs_recieved_obj)
 
-				elif type(zfs_recieved_obj) == zfs.ZFSChunk:
+				# elif type(zfs_recieved_obj) == zfs.ZFSChunk:
+				elif frame_type == 3:
 					# zfs.log(f'Got a chunk: {repr(zfs_recieved_obj)}', level=logging.INFO, fg="orange")
 
-					zfs.workers[zfs_recieved_obj.id].restore(zfs_recieved_obj)
+					zfs.workers[transfer_id].restore(zfs_recieved_obj)
 
-				elif type(zfs_recieved_obj) == zfs.ZFSEndFrame:
-					zfs.workers[zfs_recieved_obj.id].close()
+				# elif type(zfs_recieved_obj) == zfs.ZFSEndFrame:
+				elif frame_type == 4:
+					zfs.workers[transfer_id].close()

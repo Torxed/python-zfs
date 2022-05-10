@@ -6,13 +6,13 @@ from .logger import log
 
 workers = {}
 
-def has_worker_for(obj):
-	return obj.id in workers
+def has_worker_for(transfer_id):
+	return transfer_id in workers
 
-def setup_worker(obj):
-	if type(obj) == ZFSSnapshotDelta:
-		log(f"Setting up a DeltaReader for {repr(obj)}", level=logging.INFO, fg="grey")
-		workers[obj.id] = DeltaReader(obj)
-	elif type(obj) == ZFSPool:
-		log(f"Setting up a PoolRestore reader for {repr(obj)}", level=logging.INFO, fg="grey")
-		workers[obj.id] = PoolRestore(obj)
+def setup_worker(transfer_id, information):
+	if information[0] == 2:
+		log(f"Setting up a DeltaReader for {information}", level=logging.INFO, fg="grey")
+		workers[transfer_id] = DeltaReader(information)
+	elif information[0] == 1:
+		log(f"Setting up a PoolRestore reader for {information}", level=logging.INFO, fg="grey")
+		workers[transfer_id] = PoolRestore(information)

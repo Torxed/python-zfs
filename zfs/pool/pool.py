@@ -4,6 +4,7 @@ import select
 import logging
 import signal
 import time
+import typing
 from ..list import snapshots
 from ..models import ZFSPool
 from ..storage import storage
@@ -69,7 +70,7 @@ class Pool:
 		if self.is_alive():
 			return self.worker.stdout.read(buf_len)
 
-		if self.pollobj.poll(0.01):
+		if self.pollobj.poll():
 			return self.worker.stdout.read(buf_len)
 
 	def close(self):
@@ -101,11 +102,11 @@ class Pool:
 
 
 class PoolRestore:
-	def __init__(self, pool :ZFSPool):
+	def __init__(self, pool :typing.List[typing.Any]):
 		self.worker = None
 		self.pollobj = select.epoll()
 		self.fileno = None
-		self.pool = pool
+		self.pool_info = pool
 		self.restored = [-1]
 		self.started = time.time()
 		self.ended = None
@@ -115,7 +116,7 @@ class PoolRestore:
 		if storage['arguments'].pool:
 			return storage['arguments'].pool
 
-		return self.pool.name
+		return self.pool_info[2]
 
 	def __enter__(self):
 		return self
@@ -127,7 +128,7 @@ class PoolRestore:
 		self.close()
 
 	def __repr__(self):
-		return f"PoolRestore(pool={repr(self.pool)}[{self.name}], restore_index={self.restored[-1]}"
+		return f"PoolRestore(pool={repr(self.pool_info)}[{self.name}], restore_index={self.restored[-1]}"
 
 	def restore(self, frame):
 		if not self.worker:
@@ -143,28 +144,33 @@ class PoolRestore:
 					stderr=subprocess.STDOUT
 				)
 				self.fileno = self.worker.stdout.fileno()
-				self.pollobj.register(self.fileno, select.EPOLLIN|select.EPOLLHUP)
+				if not storage['arguments'].dummy_data:
+					self.pollobj.register(self.fileno, select.EPOLLIN|select.EPOLLHUP)
 
-		if frame.frame_index in self.restored:
+		frame_index = frame[2]
+
+		if frame_index in self.restored:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
 			return self.close()
 
-		if frame.frame_index != (self.restored[-1] + 1) % 255:
-			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame.frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
+		if frame_index != (self.restored[-1] + 1) % 255:
+			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
 			return self.close()
 
-		self.restored = self.restored[-4:] + [frame.frame_index]
+		self.restored = self.restored[-4:] + [frame_index]
 
-		log(f"Restoring Pool using {repr(self)}", level=logging.DEBUG, fg="orange")
+		if storage['arguments'].debug:
+			log(f"Restoring Pool using {repr(self)}", level=logging.DEBUG, fg="orange")
+			
 		try:
-			self.worker.stdin.write(frame.data)
+			self.worker.stdin.write(frame[5])
 			self.worker.stdin.flush()
 		except:
 			raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
-		if not storage['arguments'].dummy_data:
-			if self.pollobj.poll(0.001):
-				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
+		# if not storage['arguments'].dummy_data:
+		# 	if self.pollobj.poll(0):
+		# 		raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
 
 	def close(self):

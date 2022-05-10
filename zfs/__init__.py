@@ -18,6 +18,8 @@ parent.add_argument("--locale", default="C", type=str, nargs="?", help="Sets the
 parent.add_argument("--log-dir", default=pathlib.Path("./").resolve(), type=pathlib.Path, nargs="?", help="Sets the destination of where to save logs.")
 parent.add_argument("--debug", default=False, action="store_true", help="Turns on debugging output.")
 parent.add_argument("--dummy-data", nargs="?", type=pathlib.Path, help="Enables dummy data for any given action using a binary blob specified.")
+parent.add_argument("--framesize", default=1500, type=int, nargs="?", help="Sets MTU for the frames going out (this size includes headers).")
+
 
 storage['argparse'] = parent
 storage['arguments'], unknowns = parent.parse_known_args()
