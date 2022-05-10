@@ -1,6 +1,8 @@
 # python-zfs
 Python wrapper for zfs
 
+![speed-test](https://img.shields.io/badge/speed%20test-949%20Mibps-brightgreen)
+
 # Tooling usage
 
 ## Starting the reciever
