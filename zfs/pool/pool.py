@@ -69,7 +69,7 @@ class Pool:
 		if self.is_alive():
 			return self.worker.stdout.read(buf_len)
 
-		if self.pollobj.poll(0.01):
+		if self.pollobj.poll():
 			return self.worker.stdout.read(buf_len)
 
 	def close(self):
@@ -143,7 +143,8 @@ class PoolRestore:
 					stderr=subprocess.STDOUT
 				)
 				self.fileno = self.worker.stdout.fileno()
-				self.pollobj.register(self.fileno, select.EPOLLIN|select.EPOLLHUP)
+				if not storage['arguments'].dummy_data:
+					self.pollobj.register(self.fileno, select.EPOLLIN|select.EPOLLHUP)
 
 		if frame.frame_index in self.restored:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
@@ -163,7 +164,7 @@ class PoolRestore:
 			raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
 		if not storage['arguments'].dummy_data:
-			if self.pollobj.poll(0.001):
+			if self.pollobj.poll():
 				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
 

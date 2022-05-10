@@ -54,13 +54,13 @@ class Reciever:
 				if data_recieved:
 					data_recieved = False
 	
-				for fileno, event in self.poller.poll(0.025): # Retry up to 1 second
-					data, auxillary_data_raw, flags, addr = self.socket.recvmsg(65535, socket.CMSG_LEN(4096))
+				# for fileno, event in self.poller.poll(0.025): # Retry up to 1 second
+				data, auxillary_data_raw, flags, addr = self.socket.recvmsg(65535, socket.CMSG_LEN(4096))
 					# data, sender = self.socket.recvfrom(self.buffer_size)
-					data_recieved = True
+				# 	data_recieved = True
 
-					for result in self.unpack_frame(data):
-						yield result
+				for result in self.unpack_frame(data):
+					yield result
 
 					# transfer_id = self.recieve_frame(data, sender)
 					# if transfer_id:
