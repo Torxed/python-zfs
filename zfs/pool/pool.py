@@ -2,6 +2,7 @@ import subprocess
 import struct
 import select
 import logging
+import signal
 from ..models import ZFSPool
 from ..storage import storage
 from ..logger import log
@@ -75,6 +76,7 @@ class PoolRestore:
 		self.fileno = None
 		self.pool = pool
 		self.restored = []
+		print(' ****** INIT ****** ')
 
 	@property
 	def name(self):
@@ -90,12 +92,7 @@ class PoolRestore:
 		if args[0]:
 			print(args)
 
-		if self.worker:
-			if self.fileno:
-				self.pollobj.unregister(self.fileno)
-			self.worker.stdout.close()
-			self.worker.stdin.close()
-			self.worker.stderr.close()
+		self.close()
 
 	def restore(self, frame):
 		if not self.worker:
@@ -126,3 +123,17 @@ class PoolRestore:
 		if not storage['arguments'].dummy_data:
 			if self.pollobj.poll(0.001):
 				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
+
+	def close(self):
+		log(f'Closing restore on: {repr(self.pool)}[{self.name}] ({self.fileno})', level=logging.INFO, fg="green")
+
+		if self.worker:
+			if self.fileno:
+				try:
+					self.pollobj.unregister(self.worker.stdout.fileno())
+				except:
+					# No idea why this happens
+					pass
+			self.worker.send_signal(signal.SIGTERM)
+			self.worker.stdout.close()
+			self.worker.stdin.close()

@@ -75,6 +75,8 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
 		previous_data = data
 		frame_index += 1
 
+	print(stream.worker.stdout.read(100))
+
 	log(f"Telling reciever that we are finished with {repr(stream)}, resending this {resend_buffer} time(s)", fg="green", level=logging.INFO)
 	for resend in range(resend_buffer):
 		frame = Ethernet(

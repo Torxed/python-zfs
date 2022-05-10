@@ -14,5 +14,5 @@ def setup_worker(obj):
 		log(f"Setting up a DeltaReader for {repr(obj)}", level=logging.INFO, fg="grey")
 		workers[obj.id] = DeltaReader(obj)
 	elif type(obj) == ZFSPool:
-		log(f"Setting up a PoolReader reader for {repr(obj)}", level=logging.INFO, fg="grey")
+		log(f"Setting up a PoolRestore reader for {repr(obj)}", level=logging.INFO, fg="grey")
 		workers[obj.id] = PoolRestore(obj)

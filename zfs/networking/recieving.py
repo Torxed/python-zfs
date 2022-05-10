@@ -9,6 +9,7 @@ from ..models import (
 	ZFSChunk,
 	ZFSPool,
 	ZFSSnapshotDelta,
+	ZFSEndFrame,
 	Ethernet,
 	IPv4,
 	UDP

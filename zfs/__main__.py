@@ -69,7 +69,7 @@ elif args.reciever:
 						zfs.setup_worker(zfs_recieved_obj)
 
 				elif type(zfs_recieved_obj) == zfs.ZFSChunk:
-					zfs.log(f'Got a chunk: {repr(zfs_recieved_obj)}', level=logging.INFO, fg="orange")
+					# zfs.log(f'Got a chunk: {repr(zfs_recieved_obj)}', level=logging.INFO, fg="orange")
 
 					zfs.workers[zfs_recieved_obj.id].restore(zfs_recieved_obj)
 
