@@ -21,6 +21,11 @@ class Snapshot(pydantic.BaseModel):
 	class Config:
 		arbitrary_types_allowed = True
 
+	@property
+	def index_id(self):
+		return int(self.name.split('@')[-1])
+	
+
 	def destroy(self):
 		from .. import SysCommand
 

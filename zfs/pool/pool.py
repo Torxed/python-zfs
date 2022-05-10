@@ -3,6 +3,7 @@ import struct
 import select
 import logging
 import signal
+from ..list import snapshots
 from ..models import ZFSPool
 from ..storage import storage
 from ..logger import log
@@ -14,6 +15,12 @@ from ..general import (
 
 class Pool:
 	def __init__(self, pool_obj :ZFSPool, recursive :bool = True):
+		if '/' not in pool_obj.name:
+			raise ValueError(f"Pool() does not permit / in ZFSPool() object as it indicates a dataset.")
+
+		if '@' not in pool_obj.name:
+			raise ValueError(f"Pool() does not permit @ in ZFSPool() object as it indicates a snapshot.")
+
 		self.pool_obj = pool_obj
 		self.recursive = "-R" if recursive else ""
 		self.worker = None
@@ -24,13 +31,9 @@ class Pool:
 			from ..general import FakePopen
 			self.worker = FakePopen(storage['arguments'].dummy_data)
 		else:
-			try:
-				SysCommand(f"zfs unmount {self.pool_obj.name}")
-			except SysCallError as error:
-				if not 'not currently mounted' in str(error):
-					raise error
+			state_snapshot = self.take_master_snapshot()
 
-			self.worker = subprocess.Popen(["zfs", "send", "-c", self.pool_obj.name], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			self.worker = subprocess.Popen(["zfs", "send", "-c", self.recursive, state_snapshot], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			self.pollobj.register(self.worker.stdout.fileno(), select.EPOLLIN|select.EPOLLHUP)
 
 		return self
@@ -48,6 +51,18 @@ class Pool:
 	@property
 	def transfer_id(self):
 		return self.pool_obj.transfer_id
+
+	@property
+	def name(self):
+		return self.pool_obj.name
+	
+
+	def take_master_snapshot(self):
+		highest_snapshot_number = max([snapshot.index_id for snapshot in snapshots()]) + 1
+
+		SysCommand(f"zfs snapshot -r {self.name}@{highest_snapshot_number}")
+
+		return f"{self.name}@{highest_snapshot_number}"
 
 	def is_alive(self):
 		return self.worker.poll() is None
