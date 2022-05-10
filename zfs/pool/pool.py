@@ -5,6 +5,7 @@ import logging
 from ..models import ZFSPool
 from ..storage import storage
 from ..logger import log
+from ..exceptions import SysCallError
 from ..general import (
 	generate_transmission_id,
 	SysCommand
@@ -21,7 +22,12 @@ class Pool:
 			from ..general import FakePopen
 			self.worker = FakePopen(storage['arguments'].dummy_data)
 		else:
-			SysCommand(f"zfs unmount {self.pool_obj.name}")
+			try:
+				SysCommand(f"zfs unmount {self.pool_obj.name}")
+			except SysCallError as error:
+				if not 'not currently mounted' in str(error):
+					raise error
+
 			self.worker = subprocess.Popen(["zfs", "send", "-c", self.pool_obj.name], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		return self
 
