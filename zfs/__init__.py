@@ -13,7 +13,7 @@ parent = argparse.ArgumentParser(description="A ZFS utility and library to manag
 # General library options, that will affect anything surrounding python-zfs
 parent.add_argument("--interface", type=str, nargs="?", help="Which interface should we send the ZFS stream on.")
 # parser.add_argument("--src-ip", default=None, type=str, nargs="?", help="Which source IP should we be sending as (default will autodetect --interface first IP).")
-parent.add_argument("--verbosity-level", default='DEBUG', type=str, nargs='?', help="Sets the lowest threashold for log messages, according to https://docs.python.org/3/library/logging.html#logging-levels")
+parent.add_argument("--verbosity-level", default='info', type=str, nargs='?', help="Sets the lowest threashold for log messages, according to https://docs.python.org/3/library/logging.html#logging-levels")
 parent.add_argument("--locale", default="C", type=str, nargs="?", help="Sets the locale of subshells executed.")
 parent.add_argument("--log-dir", default=pathlib.Path("./").resolve(), type=pathlib.Path, nargs="?", help="Sets the destination of where to save logs.")
 parent.add_argument("--debug", default=False, action="store_true", help="Turns on debugging output.")

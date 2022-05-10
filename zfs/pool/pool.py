@@ -105,7 +105,7 @@ class PoolRestore:
 		self.pollobj = select.epoll()
 		self.fileno = None
 		self.pool = pool
-		self.restored = []
+		self.restored = [-1]
 
 	@property
 	def name(self):
@@ -122,6 +122,9 @@ class PoolRestore:
 			print(args)
 
 		self.close()
+
+	def __repr__(self):
+		return f"PoolRestore(pool={repr(self.pool)}[{self.name}], restore_index={self.restored[-1]}"
 
 	def restore(self, frame):
 		if not self.worker:
@@ -143,9 +146,14 @@ class PoolRestore:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
 			return None
 
+		if frame.frame_index != self.restored[-1] + 1:
+			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame.frame_index}, we expected {self.restored[-1] + 1} on {repr(frame)}", level=logging.WARNING, fg="red")
+			exit(1)
+			return None
+
 		self.restored = self.restored[-4:] + [frame.frame_index]
 
-		log(f"Restoring Pool using {repr(self.pool)}[{self.name}]", level=logging.INFO, fg="green")
+		log(f"Restoring Pool using {repr(self)}", level=logging.DEBUG, fg="orange")
 		self.worker.stdin.write(frame.data)
 		self.worker.stdin.flush()
 
@@ -153,8 +161,9 @@ class PoolRestore:
 			if self.pollobj.poll(0.001):
 				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
 
+
 	def close(self):
-		log(f'Closing restore on: {repr(self.pool)}[{self.name}] ({self.fileno})', level=logging.INFO, fg="green")
+		log(f'Closing restore on: {repr(self)}', level=logging.INFO, fg="green")
 
 		if self.worker:
 			if self.fileno:
