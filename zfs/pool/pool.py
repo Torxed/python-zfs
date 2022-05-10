@@ -31,7 +31,7 @@ class Pool:
 					raise error
 
 			self.worker = subprocess.Popen(["zfs", "send", "-c", self.pool_obj.name], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			self.pollobj.register(self.worker.fileno(), select.EPOLLIN|select.EPOLLHUP)
+			self.pollobj.register(self.worker.stdout.fileno(), select.EPOLLIN|select.EPOLLHUP)
 
 		return self
 
