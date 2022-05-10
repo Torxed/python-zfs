@@ -1,9 +1,10 @@
 # python-zfs
 Python wrapper for zfs
 
-![speed-test](https://img.shields.io/badge/speed%20test-1.43%20Gibps-brightgreen)
+![speed-test](https://img.shields.io/badge/speed%20test-5.983%20Gibps-brightgreen)
 
-![speed](https://user-images.githubusercontent.com/861439/167673950-f1996184-0e4a-4adf-bfba-e00400071976.gif)
+![speed](https://user-images.githubusercontent.com/861439/167684174-e7bcea49-9275-4727-b878-4ea98cf323af.gif)
+
 
 
 # Tooling usage
