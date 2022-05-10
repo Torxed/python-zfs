@@ -75,4 +75,18 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=692):
 		previous_data = data
 		frame_index += 1
 
+	log(f"Telling reciever that we are finished with {repr(stream)}, resending this {resend_buffer} time(s)", fg="green", level=logging.INFO)
+	for resend in range(resend_buffer):
+		frame = Ethernet(
+			source=str(addressing.source.mac_address),
+			destination=str(addressing.destination.mac_address),
+			payload_type=8,
+			payload=IPv4(
+				source=addressing.source.ipv4_address,
+				destination=addressing.destination.ipv4_address,
+				payload=UDP(destination=addressing.udp_port, payload=stream.end_frame)
+			)
+		)
+		transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+
 	promisciousMode.off()

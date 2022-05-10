@@ -16,3 +16,4 @@ from .netnode import (
 from .ethernet import Ethernet
 from .udp import UDP
 from .ipv4 import IPv4
+from .zfsendframe import ZFSEndFrame

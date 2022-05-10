@@ -162,6 +162,14 @@ class Reciever:
 					previous_checksum=previous_checksum
 				)
 
+			elif frame_type == 4:
+				"""
+				Frame type 3 is and END frame to a given transmission.
+				"""
+				yield ZFSEndFrame(
+					transfer_id=struct.unpack('B', data[1:2])[0]
+				)
+
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
 			# Informational frame for a snapshot (not delta) recieved (always starts with 0)

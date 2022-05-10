@@ -60,6 +60,13 @@ class Pool:
 			+ struct.pack('B', len(self.pool_obj.name)) + bytes(self.pool_obj.name, 'UTF-8') # The volume name
 		)
 
+	@property
+	def end_frame(self):
+		return (
+			struct.pack('B', 4) # Frame type 4 = END frame
+			+ struct.pack('B', self.pool_obj.transfer_id) # Which session are we initating
+		)
+
 
 class PoolRestore:
 	def __init__(self, pool :ZFSPool):

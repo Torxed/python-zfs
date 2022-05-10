@@ -50,7 +50,8 @@ from .models import (
 	NetNode,
 	Ethernet,
 	UDP,
-	IPv4
+	IPv4,
+	ZFSEndFrame
 )
 from .snapshots import (
 	Delta,
