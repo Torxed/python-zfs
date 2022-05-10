@@ -43,8 +43,6 @@ class Pool:
 			print(args)
 
 		if self.worker:
-			SysCommand(f"zfs mount {self.pool_obj.name}")
-
 			self.worker.stdout.close()
 			self.worker.stderr.close()
 
@@ -55,7 +53,6 @@ class Pool:
 	@property
 	def name(self):
 		return self.pool_obj.name
-	
 
 	def take_master_snapshot(self):
 		highest_snapshot_number = max([snapshot.index_id for snapshot in snapshots()]) + 1
