@@ -53,7 +53,7 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 			previous_checksum=zlib.crc32(previous_data if previous_data else b'')
 		)
 
-		log(f'Sending chunk: {repr(payload)}', level=logging.INFO, fg="orange")
+		# log(f'Sending chunk: {repr(payload)}', level=logging.INFO, fg="orange")
 
 		frame = Ethernet(
 			source=str(addressing.source.mac_address),
