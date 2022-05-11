@@ -1,8 +1,7 @@
-import pydantic
-
-class ZFSPool(pydantic.BaseModel):
-	transfer_id :int # B
-	name :str
+class ZFSPool():
+	def __init__(self, transfer_id, name):
+		self.transfer_id = transfer_id
+		self.name = name
 
 	@property
 	def id(self):

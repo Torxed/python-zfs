@@ -6,7 +6,6 @@ import signal
 import time
 import typing
 from ..list import snapshots
-from ..models import ZFSPool
 from ..storage import storage
 from ..logger import log
 from ..exceptions import SysCallError
@@ -16,7 +15,7 @@ from ..general import (
 )
 
 class Pool:
-	def __init__(self, pool_obj :ZFSPool, recursive :bool = True):
+	def __init__(self, pool_obj, recursive :bool = True):
 		if '/' in pool_obj.name:
 			raise ValueError(f"Pool() does not permit / in ZFSPool() object as it indicates a dataset.")
 
@@ -57,7 +56,7 @@ class Pool:
 		return self.pool_obj.name
 
 	def take_master_snapshot(self):
-		highest_snapshot_number = max([snapshot.index_id for snapshot in snapshots()]) + 1
+		highest_snapshot_number = max([snapshot['index_id'] for snapshot in snapshots()]) + 1
 
 		SysCommand(f"zfs snapshot -r {self.name}@{highest_snapshot_number}")
 

@@ -5,15 +5,6 @@ import struct
 import zlib
 import binascii
 
-from ..models import (
-	ZFSChunk,
-	ZFSPool,
-	ZFSSnapshotDelta,
-	ZFSEndFrame,
-	Ethernet,
-	IPv4,
-	UDP
-)
 from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
 
