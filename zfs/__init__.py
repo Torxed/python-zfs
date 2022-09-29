@@ -48,6 +48,7 @@ from .models import (
 # 	ZFSChunk,
 # 	ZFSSnapshotDelta,
  	ZFSPool,
+ 	ZFSDataset,
 # 	NetNodeAddress,
 # 	NetNode,
 # 	Ethernet,
@@ -62,6 +63,10 @@ from .snapshots import (
 from .pool import (
 	Pool,
 	PoolRestore
+)
+from .dataset import (
+	Dataset,
+	DatasetRestore
 )
 from .workers import (
 	workers as workers,

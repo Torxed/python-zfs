@@ -23,11 +23,16 @@ common_parameters.add_argument("--source-ip", nargs="?", type=ipaddress.IPv4Addr
 common_parameters.add_argument("--source-mac", nargs="?", type=str, help="Which MAC to send as (can be an existing or spoofed one).")
 common_parameters.add_argument("--udp-port", default=1337, nargs="?", type=ipaddress.IPv4Address, help="Which UDP port to send to.")
 
-common_parameters.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
 common_parameters.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
 common_parameters.add_argument("--delta-end", nargs="?", type=str, help="Which is the end of the delta.")
 
 zfs.storage['arguments'], unknown = common_parameters.parse_known_args(namespace=zfs.storage['arguments'])
+
+type_entrypoint = argparse.ArgumentParser(parents=[common_parameters], description="A set of common parameters for the tooling", add_help=True)
+type_options = type_entrypoint.add_mutually_exclusive_group(required=True)
+type_options.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
+type_options.add_argument("--dataset", nargs="?", type=str, help="Defines which dataset to perform the action on.")
+zfs.storage['arguments'], unknown = type_entrypoint.parse_known_args(namespace=zfs.storage['arguments'])
 
 module_entrypoints = argparse.ArgumentParser(parents=[common_parameters], description="A set of common parameters for the tooling", add_help=True)
 # Full Sync arguments
@@ -45,10 +50,11 @@ args = zfs.storage['arguments']
 
 
 if args.full_sync:
-	if not all([args.pool, args.destination_ip, args.source_ip, args.destination_mac, args.source_mac]):
+	if not all([args.destination_ip, args.source_ip, args.destination_mac, args.source_mac]):
 		raise ValueError(f"--full-sync requires --pool, --destination-ip, --destination-mac, --source-ip and --source-mac to be defined, so we need to know which pool to fully sync with and which destination.")
 
-	pool = zfs.get_volume(args.pool)
+	if any([args.pool, args.dataset]) is False:
+		raise ValueError(f"--pool or --dataset must be given to initiate a full sync.")
 
 	postnord = {
 		'interface' : args.interface,
@@ -63,8 +69,14 @@ if args.full_sync:
 		'udp_port' : zfs.storage['arguments'].udp_port
 	}
 
-	with zfs.Pool(zfs.ZFSPool(name=args.pool, transfer_id=1)) as stream:
-		zfs.networking.send(stream=stream, addressing=postnord)
+	if args.pool and (zfsObj := zfs.get_volume(args.pool)):
+		with zfs.Pool(zfsObj) as stream:
+			zfs.networking.send(stream=stream, addressing=postnord)
+	elif args.dataset and (zfsObj := zfs.get_volume(args.dataset)):
+		with zfs.Dataset(zfsObj) as stream:
+			zfs.networking.send(stream=stream, addressing=postnord)
+	else:
+		raise KeyError(f"Could not locate pool or dataset.")
 
 elif args.reciever:
 	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as listener:
