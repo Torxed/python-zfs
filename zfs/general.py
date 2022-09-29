@@ -230,7 +230,7 @@ class SysCommandWorker:
 
 		if self.child_fd:
 			got_output = False
-			for fileno, event in self.poll_object.poll(poll_delay):
+			for fileno, event in self.poll_object.poll(self.poll_delay):
 				try:
 					output = os.read(self.child_fd, 8192)
 					got_output = True
