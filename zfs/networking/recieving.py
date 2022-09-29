@@ -55,82 +55,73 @@ class Reciever:
 				for fileno, event in self.poller.poll(0.000002): # 0.000000000001): # Retry up to 1 second
 					data, auxillary_data_raw, flags, addr = self.socket.recvmsg(self.buffer_size, socket.CMSG_LEN(self.buffer_size))
 
-					for result in self.unpack_frame(data):
-						yield result
+					if len(data) < 42:
+						"""
+						Not a valid IPv4 packet so no point in parsing.
+						"""
+						continue
 
-						if result[0] == 4:
-							end_frame_recieved = True
-							break
+					segments = struct.unpack("!6s6s2s12s4s4sHHHH", data[0:42])
 
-
-	def unpack_frame(self, data):
-		if len(data) < 42:
-			"""
-			Not a valid IPv4 packet so no point in parsing.
-			"""
-			return None
-
-		segments = struct.unpack("!6s6s2s12s4s4sHHHH", data[0:42])
-
-		ethernet_segments = segments[0:3]
-		mac_dest, mac_source = ethernet_segments[:2]
-		ip_source, ip_dest = segments[4:6]
-		source_port, destination_port, udp_payload_len, udp_checksum = segments[6:10]
-		
-		if destination_port == self.port and (self.addr == b'' or self.addr == ip_dest):
-			if any(data := data[42:42 + udp_payload_len]):
-				frame_type = struct.unpack('B', data[0:1])[0]
-				if frame_type == 0:
-					"""
-					Frame type 2 is a pre-flight frame of a full sync of a dataset.
-					This frame will contain:
-						* Transfer ID (a session if you will)
-						* Volume/Dataset name
-					"""
-					transfer_id, volume_name_len = struct.unpack('BB', data[1:3])
-					volume = data[3:3 + volume_name_len]
-
-					yield [frame_type, transfer_id, volume.decode('UTF-8')]
-				elif frame_type == 1:
-					"""
-					Frame type 2 is a pre-flight frame of a full sync of a dataset.
-					This frame will contain:
-						* Transfer ID (a session if you will)
-						* Volume/Dataset name
-					"""
-					transfer_id, volume_name_len = struct.unpack('BB', data[1:3])
-					volume = data[3:3 + volume_name_len]
-
-					yield [frame_type, transfer_id, volume.decode('UTF-8')]
-				elif frame_type == 2:
-					"""
-					Frame type 1 is a pre-flight frame of a delta between two snapshots.
-					This frame will contain:
-						* Transfer ID (a session if you will)
-						* Volume/Dataset name
-					"""
-					transfer_id, volume_name_len = struct.unpack('BB', data[1:3])
-					volume = data[3:3 + volume_name_len]
-
-					yield [frame_type, transfer_id, volume.decode('UTF-8')]
-				elif frame_type == 3:
-					"""
-					Fram type 3 is chunk data for a given session.
-					The given session is defined based on the
-					pre-flight frame that was sent to initate the session.
-					"""
-					transfer_id, frame_index, checksum, length = struct.unpack('!BBIH', data[1:9])
-					recieved_data = data[9:9 + length]
+					ethernet_segments = segments[0:3]
+					mac_dest, mac_source = ethernet_segments[:2]
+					ip_source, ip_dest = segments[4:6]
+					source_port, destination_port, udp_payload_len, udp_checksum = segments[6:10]
 					
-					previous_checksum = struct.unpack('!I', data[9 + length:9 + length + 4])[0]
+					if destination_port == self.port and (self.addr == b'' or self.addr == ip_dest):
+						if any(data := data[42:42 + udp_payload_len]):
+							frame_type = struct.unpack('B', data[0:1])[0]
+							if frame_type == 0:
+								"""
+								Frame type 2 is a pre-flight frame of a full sync of a dataset.
+								This frame will contain:
+									* Transfer ID (a session if you will)
+									* Volume/Dataset name
+								"""
+								transfer_id, volume_name_len = struct.unpack('BB', data[1:3])
+								volume = data[3:3 + volume_name_len]
 
-					yield [frame_type, transfer_id, frame_index, checksum, length, recieved_data, previous_checksum]
+								yield [frame_type, transfer_id, volume.decode('UTF-8')]
+							elif frame_type == 1:
+								"""
+								Frame type 2 is a pre-flight frame of a full sync of a dataset.
+								This frame will contain:
+									* Transfer ID (a session if you will)
+									* Volume/Dataset name
+								"""
+								transfer_id, volume_name_len = struct.unpack('BB', data[1:3])
+								volume = data[3:3 + volume_name_len]
 
-				elif frame_type == 4:
-					"""
-					Frame type 3 is and END frame to a given transmission.
-					"""
-					yield [frame_type, struct.unpack('B', data[1:2])[0]]
+								yield [frame_type, transfer_id, volume.decode('UTF-8')]
+							elif frame_type == 2:
+								"""
+								Frame type 1 is a pre-flight frame of a delta between two snapshots.
+								This frame will contain:
+									* Transfer ID (a session if you will)
+									* Volume/Dataset name
+								"""
+								transfer_id, volume_name_len = struct.unpack('BB', data[1:3])
+								volume = data[3:3 + volume_name_len]
+
+								yield [frame_type, transfer_id, volume.decode('UTF-8')]
+							elif frame_type == 3:
+								"""
+								Fram type 3 is chunk data for a given session.
+								The given session is defined based on the
+								pre-flight frame that was sent to initate the session.
+								"""
+								transfer_id, frame_index, checksum, length = struct.unpack('!BBIH', data[1:9])
+								recieved_data = data[9:9 + length]
+								
+								previous_checksum = struct.unpack('!I', data[9 + length:9 + length + 4])[0]
+
+								yield [frame_type, transfer_id, frame_index, checksum, length, recieved_data, previous_checksum]
+
+							elif frame_type == 4:
+								"""
+								Frame type 3 is and END frame to a given transmission.
+								"""
+								yield [frame_type, struct.unpack('B', data[1:2])[0]]
 
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
