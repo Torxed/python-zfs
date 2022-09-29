@@ -197,6 +197,10 @@ class DatasetRestore:
 	def close(self):
 		self.ended = time.time()
 
+		self.worker.stdin.flush()
+		if (rest_data := self.worker.stdout.read()) != b'':
+			log(f"Restore might not have completed: {rest_data}", level=logging.WARNING, fg="orange")
+
 		if self.worker:
 			if self.fileno:
 				try:
