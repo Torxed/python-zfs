@@ -81,8 +81,7 @@ class SysCommandWorker:
 		environment_vars :Optional[Dict[str, Any]] = None,
 		logfile :Optional[None] = None,
 		working_directory :Optional[str] = './',
-		remove_vt100_escape_codes_from_lines :bool = True,
-		poll_delay=0.2):
+		remove_vt100_escape_codes_from_lines :bool = True):
 
 		if not callbacks:
 			callbacks = {}
@@ -102,8 +101,8 @@ class SysCommandWorker:
 		self.cmd = cmd
 		self.callbacks = callbacks
 		self.peak_output = peak_output
-		# define the standard locale for command outputs. For now the C ascii one. Can be overriden
-		self.environment_vars = {'LC_ALL' : storage['arguments'].locale, **environment_vars}
+		# define the standard locale for command outputs. For now the C ascii one. Can be overridden
+		self.environment_vars = {**storage.get('CMD_LOCALE',{}),**environment_vars}
 		self.logfile = logfile
 		self.working_directory = working_directory
 
@@ -115,7 +114,6 @@ class SysCommandWorker:
 		self.started :Optional[float] = None
 		self.ended :Optional[float] = None
 		self.remove_vt100_escape_codes_from_lines :bool = remove_vt100_escape_codes_from_lines
-		self.poll_delay = poll_delay
 
 	def __contains__(self, key: bytes) -> bool:
 		"""
@@ -166,7 +164,7 @@ class SysCommandWorker:
 			log(args[1], level=logging.DEBUG, fg='red')
 
 		if self.exit_code != 0:
-			raise SysCallError(f"{self.cmd} exited with abnormal exit code [{self.exit_code}]: {self._trace_log[-500:]}", self.exit_code)
+			raise SysCallError(f"{self.cmd} exited with abnormal exit code [{self.exit_code}]: {self._trace_log[-500:]}", self.exit_code, worker=self)
 
 	def is_alive(self) -> bool:
 		self.poll()
@@ -208,8 +206,17 @@ class SysCommandWorker:
 				except UnicodeDecodeError:
 					return False
 
-			with open(f"{storage['arguments'].log_dir}/cmd_output.txt", "a") as peak_output_log:
+			peak_logfile = pathlib.Path(f"{storage.get('LOG_PATH', './')}/cmd_output.txt")
+
+			change_perm = False
+			if peak_logfile.exists() is False:
+				change_perm = True
+
+			with peak_logfile.open("a") as peak_output_log:
 				peak_output_log.write(output)
+
+			if change_perm:
+				os.chmod(str(peak_logfile), stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
 
 			sys.stdout.write(str(output))
 			sys.stdout.flush()
@@ -221,7 +228,7 @@ class SysCommandWorker:
 
 		if self.child_fd:
 			got_output = False
-			for fileno, event in self.poll_object.poll(self.poll_delay):
+			for fileno, event in self.poll_object.poll(0.1):
 				try:
 					output = os.read(self.child_fd, 8192)
 					got_output = True
@@ -242,27 +249,37 @@ class SysCommandWorker:
 						self.exit_code = 1
 
 	def execute(self) -> bool:
+		import pty
+
 		if (old_dir := os.getcwd()) != self.working_directory:
 			os.chdir(str(self.working_directory))
 
 		# Note: If for any reason, we get a Python exception between here
 		#   and until os.close(), the traceback will get locked inside
 		#   stdout of the child_fd object. `os.read(self.child_fd, 8192)` is the
-		#   only way to get the traceback without loosing it.
+		#   only way to get the traceback without losing it.
 
 		self.pid, self.child_fd = pty.fork()
 
 		# https://stackoverflow.com/questions/4022600/python-pty-fork-how-does-it-work
 		if not self.pid:
+			history_logfile = pathlib.Path(f"{storage.get('LOG_PATH', './')}/cmd_history.txt")
 			try:
+				change_perm = False
+				if history_logfile.exists() is False:
+					change_perm = True
+
 				try:
-					with open(f"{storage['arguments'].log_dir}/cmd_history.txt", "a") as cmd_log:
-						cmd_log.write(f"{' '.join(self.cmd)}\n")
+					with history_logfile.open("a") as cmd_log:
+						cmd_log.write(f"{self.cmd}\n")
+
+					if change_perm:
+						os.chmod(str(history_logfile), stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
 				except PermissionError:
 					pass
 
 				os.execve(self.cmd[0], list(self.cmd), {**os.environ, **self.environment_vars})
-				if storage['arguments'].debug:
+				if storage['arguments'].get('debug'):
 					log(f"Executing: {self.cmd}", level=logging.DEBUG)
 
 			except FileNotFoundError:
@@ -270,7 +287,7 @@ class SysCommandWorker:
 				self.exit_code = 1
 				return False
 		else:
-			# Only parent process chdir back to the original destination
+			# Only parent process moves back to the original working directory
 			os.chdir(old_dir)
 
 		self.started = time.time()

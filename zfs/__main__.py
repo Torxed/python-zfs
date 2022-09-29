@@ -76,7 +76,6 @@ elif args.reciever:
 	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as listener:
 		while True:
 			for zfs_recieved_obj in listener:
-				print('Got:', zfs_recieved_obj)
 				# if type(zfs_recieved_obj) in (zfs.ZFSSnapshotDelta, zfs.ZFSPool):
 				frame_type = zfs_recieved_obj[0]
 				transfer_id = zfs_recieved_obj[1]

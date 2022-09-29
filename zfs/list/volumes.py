@@ -17,7 +17,8 @@ def volumes() -> Union[ZFSPool, ZFSDataset]:
 
 	else:
 		worker = SysCommandWorker('zfs list -H')
-		while worker.is_alive():
+		line = b''
+		while worker.is_alive() or len(line) > 0:
 			for line in worker:
 				name, used, avail, refer, mountpoint = line.strip(b'\r\n').decode('UTF-8').split('\t')
 

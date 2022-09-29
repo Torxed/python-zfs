@@ -53,25 +53,18 @@ class Reciever:
 	def __iter__(self):
 		if self.socket:
 
-			data_recieved = None
-			while data_recieved is None or data_recieved is True:
-				if data_recieved:
-					data_recieved = False
-	
-				# for fileno, event in self.poller.poll(0.025): # Retry up to 1 second
+			end_frame_recieved = None
+			while end_frame_recieved is None:
+				#for fileno, event in self.poller.poll(0.000000000001): # Retry up to 1 second
 				data, auxillary_data_raw, flags, addr = self.socket.recvmsg(self.buffer_size, socket.CMSG_LEN(self.buffer_size))
-					# data, sender = self.socket.recvfrom(self.buffer_size)
-				# 	data_recieved = True
 
 				for result in self.unpack_frame(data):
 					yield result
 
-					# transfer_id = self.recieve_frame(data, sender)
-					# if transfer_id:
-					# 	yield {
-					# 		'information' : self.transfers[transfer_id]['information'],
-					# 		'data' : self.transfers[transfer_id]['data'].pop(0)
-					# 	}
+					if result[0] == 4:
+						end_frame_recieved = True
+						break
+
 
 	def unpack_frame(self, data):
 		if len(data[:42]) < 42:
@@ -84,40 +77,13 @@ class Reciever:
 
 		ethernet_segments = segments[0:3]
 
-		# ip_source, ip_dest = [
-		# 	ipaddress.ip_address(x) for x in (
-		# 		socket.inet_ntoa(section) for section in segments[4:6]
-		# 	)
-		# ]
 		ip_source, ip_dest = segments[4:6]
 
-		# source_port, destination_port, udp_payload_len, udp_checksum = struct.unpack("!HHHH", data[34:42])
 		source_port, destination_port, udp_payload_len, udp_checksum = segments[6:10]
 
-		#ethernet_segments = struct.unpack("!6s6s2s", data[0:14])
-		# mac_dest, mac_source = (binascii.hexlify(mac) for mac in ethernet_segments[:2])
 		mac_dest, mac_source = ethernet_segments[:2]
 		
-		# frame = Ethernet(
-		# 	source=':'.join(mac_source[i:i + 2].decode('UTF-8') for i in range(0, len(mac_source), 2)),
-		# 	destination=':'.join(mac_dest[i:i + 2].decode('UTF-8') for i in range(0, len(mac_dest), 2)),
-		# 	payload_type=binascii.hexlify(ethernet_segments[2]),
-		# 	payload=IPv4(
-		# 		source=ip_source,
-		# 		destination=ip_dest,
-		# 		payload=UDP(
-		# 			source=source_port,
-		# 			destination=destination_port,
-		# 			length=udp_payload_len,
-		# 			checksum=udp_checksum,
-		# 			payload=data[42:42 + udp_payload_len]
-		# 		)
-		# 	)
-		# )
-
-		# if frame.payload.payload.destination == self.port and (self.addr == '' or self.addr == frame.payload.destination):
 		if destination_port == self.port and (self.addr == b'' or self.addr == ip_dest):
-			# data = frame.payload.payload.payload
 			if any(data := data[42:42 + udp_payload_len]):
 				frame_type = struct.unpack('B', data[0:1])[0]
 				if frame_type == 0:
@@ -177,13 +143,13 @@ class Reciever:
 					The given session is defined based on the
 					pre-flight frame that was sent to initate the session.
 					"""
-					transfer_id = struct.unpack('B', data[1:2])[0]
-					frame_index = struct.unpack('B', data[2:3])[0]
-					checksum = struct.unpack('I', data[3:7])[0]
-					length = struct.unpack('H', data[7:9])[0]
+					transfer_id, frame_index, checksum, length = struct.unpack('!BBIH', data[1:9])
+					#frame_index = struct.unpack('B', data[2:3])[0]
+					#checksum = struct.unpack('!I', data[3:7])[0]
+					#length = struct.unpack('!H', data[7:9])[0]
 					recieved_data = data[9:9 + length]
 					
-					previous_checksum = struct.unpack('I', data[9 + length:9 + length + 4])[0]
+					previous_checksum = struct.unpack('!I', data[9 + length:9 + length + 4])[0]
 
 					yield [frame_type, transfer_id, frame_index, checksum, length, recieved_data, previous_checksum]
 

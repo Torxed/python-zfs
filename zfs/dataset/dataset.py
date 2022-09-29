@@ -5,7 +5,7 @@ import logging
 import signal
 import time
 import typing
-from ..list import snapshots
+from ..list import snapshots, get_volume
 from ..storage import storage
 from ..logger import log
 from ..exceptions import SysCallError
@@ -64,7 +64,6 @@ class Dataset:
 
 	def take_master_snapshot(self):
 		if snaps := list(snapshots()):
-			print(snaps)
 			highest_snapshot_number = max([snapshot['index_id'] for snapshot in snaps]) + 1
 		else:
 			highest_snapshot_number = 1
@@ -121,12 +120,19 @@ class DatasetRestore:
 		self.started = time.time()
 		self.ended = None
 
+		if get_volume(self.pool) is None:
+			raise ValueError(f"Pool '{self.pool}' does not exist, can not perform Dataset Restore!")
+
 	@property
 	def name(self):
 		if storage['arguments'].dataset:
 			return storage['arguments'].dataset
 
-		return self.dataset[2]
+		return self.dataset_info[2]
+
+	@property
+	def pool(self):
+		return self.name.split('/')[0]
 
 	def __enter__(self):
 		return self
@@ -138,7 +144,7 @@ class DatasetRestore:
 		self.close()
 
 	def __repr__(self):
-		return f"DatasetRestore(dataset={repr(self.dataset)}[{self.name}], restore_index={self.restored[-1]}"
+		return f"DatasetRestore(dataset={repr(self.dataset_info)}[{self.name}], restore_index={self.restored[-1]}"
 
 	def restore(self, frame):
 		if not self.worker:

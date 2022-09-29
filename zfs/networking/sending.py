@@ -94,8 +94,20 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 		# data :bytes
 		# previous_checksum :int # I
 
-		payload = struct.pack('!BBB', 3, stream.transfer_id, frame_index % 255) + data + struct.pack('I', zlib.crc32(previous_data if previous_data else b''))
-
+		payload = (
+			struct.pack('!BBBIH', 
+				3,
+				stream.transfer_id,
+				frame_index % 255,
+				zlib.crc32(data),
+				len(data)
+			)
+			+ data
+			+ struct.pack('!I', 
+				zlib.crc32(previous_data if previous_data else b'')
+			)
+		)
+		
 		# payload = ZFSFrame(
 		# 	transfer_id=stream.transfer_id,
 		# 	frame_index=frame_index % 255,
