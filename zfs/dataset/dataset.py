@@ -57,8 +57,17 @@ class Dataset:
 	def name(self):
 		return self.dataset.name
 
+	@property
+	def stream_type(self):
+		return self.dataset.stream_type
+	
+
 	def take_master_snapshot(self):
-		highest_snapshot_number = max([snapshot['index_id'] for snapshot in snapshots()]) + 1
+		if snaps := list(snapshots()):
+			print(snaps)
+			highest_snapshot_number = max([snapshot['index_id'] for snapshot in snaps]) + 1
+		else:
+			highest_snapshot_number = 1
 
 		SysCommand(f"zfs snapshot -r {self.name}@{highest_snapshot_number}")
 
@@ -89,7 +98,7 @@ class Dataset:
 	@property
 	def pre_flight_info(self):
 		return (
-			struct.pack('B', 1) # Frame type 1 = Full Image
+			struct.pack('B', 0) # Frame type 1 = Full Image
 			+ struct.pack('B', self.transfer_id) # Which session are we initating
 			+ struct.pack('B', len(self.name)) + bytes(self.name, 'UTF-8') # The volume name
 		)

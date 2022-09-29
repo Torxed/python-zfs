@@ -8,3 +8,4 @@ class ZFSPool():
 	available: Optional[str] = None
 	refer: Optional[str] = None
 	mountpoint: Optional[str] = None
+	stream_type: int = 1

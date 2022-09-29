@@ -119,9 +119,25 @@ class Reciever:
 		if destination_port == self.port and (self.addr == b'' or self.addr == ip_dest):
 			# data = frame.payload.payload.payload
 			if any(data := data[42:42 + udp_payload_len]):
-
 				frame_type = struct.unpack('B', data[0:1])[0]
-				if frame_type == 1:
+				if frame_type == 0:
+					"""
+					Frame type 2 is a pre-flight frame of a full sync of a dataset.
+					This frame will contain:
+						* Transfer ID (a session if you will)
+						* Volume/Dataset name
+					"""
+					transfer_id = struct.unpack('B', data[1:2])[0]
+					volume_name_len = struct.unpack('B', data[2:3])[0]
+					volume = data[3:3 + volume_name_len]
+
+					yield [frame_type, transfer_id, volume.decode('UTF-8')]
+
+					# yield ZFSPool(
+					# 	transfer_id=transfer_id,
+					# 	name=volume.decode('UTF-8')
+					# )
+				elif frame_type == 1:
 					"""
 					Frame type 2 is a pre-flight frame of a full sync of a dataset.
 					This frame will contain:

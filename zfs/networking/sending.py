@@ -24,8 +24,6 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 	frame_index = 0
 	previous_data = None
 
-	stream_information = stream.pre_flight_info
-	log(f"Telling reciever to set up {repr(stream)}, resending this {resend_buffer} time(s)", fg="gray", level=logging.INFO)
 	# for resend in range(resend_buffer):
 	# 	frame = Ethernet(
 	# 		source=str(addressing.source.mac_address),
@@ -63,6 +61,31 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 	udp_destination = struct.pack('>H', addressing['udp_port'])
 	udp_checksum = struct.pack('>H', 0)
 
+	log(f"Telling reciever to set up {repr(stream)}, resending this {resend_buffer} time(s)", fg="gray", level=logging.INFO)
+	stream_information_payload = stream.pre_flight_info
+	udp_length = len(stream_information_payload)
+
+	ethernet = mac_header
+	ipv4 = version_and_header_length
+	ipv4 += DSC_ECN
+	ipv4 += struct.pack('>H', 20 + 8 + udp_length) # 20 = IP Length, 8 = UDP length, len(stream_information_payload) = data
+	ipv4 += identification
+	ipv4 += fragmentation
+	ipv4 += ttl
+	ipv4 += protocol
+	ipv4 += checksum
+	ipv4 += ip_source
+	ipv4 += ip_destination
+	udp = udp_source
+	udp += udp_destination
+	udp += struct.pack('>H', udp_length)
+	udp += udp_checksum
+	udp += stream_information_payload
+
+	pre_flight_frame = ethernet + ipv4 + udp
+	for i in range(3):
+		transmission_socket.sendmsg([pre_flight_frame], aux_data, flags, (storage['arguments'].interface, addressing['udp_port']))
+
 	while (data := stream.read(chunk_length)):
 		# transfer_id :int # B
 		# frame_index :int # B
@@ -71,7 +94,7 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 		# data :bytes
 		# previous_checksum :int # I
 
-		payload = struct.pack('!BB', stream.transfer_id, frame_index % 255) + data + struct.pack('I', zlib.crc32(previous_data if previous_data else b''))
+		payload = struct.pack('!BBB', 3, stream.transfer_id, frame_index % 255) + data + struct.pack('I', zlib.crc32(previous_data if previous_data else b''))
 
 		# payload = ZFSFrame(
 		# 	transfer_id=stream.transfer_id,

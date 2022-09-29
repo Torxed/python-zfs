@@ -25,6 +25,9 @@ common_parameters.add_argument("--udp-port", default=1337, nargs="?", type=ipadd
 
 common_parameters.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
 common_parameters.add_argument("--delta-end", nargs="?", type=str, help="Which is the end of the delta.")
+common_parameters.add_argument("--full-sync", default=False, action="store_true", help="Performs a full sync and transfer of a pool/dataset.")
+common_parameters.add_argument("--send-delta", default=False, action="store_true", help="Sends a delta between two snapshots of a pool/dataset.")
+common_parameters.add_argument("--snapshot", default=False, action="store_true", help="Takes a snapshot of a pool/dataset.")
 
 zfs.storage['arguments'], unknown = common_parameters.parse_known_args(namespace=zfs.storage['arguments'])
 
@@ -32,17 +35,8 @@ type_entrypoint = argparse.ArgumentParser(parents=[common_parameters], descripti
 type_options = type_entrypoint.add_mutually_exclusive_group(required=True)
 type_options.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
 type_options.add_argument("--dataset", nargs="?", type=str, help="Defines which dataset to perform the action on.")
+type_options.add_argument("--reciever", default=False, action="store_true", help="Turns on reciever mode, which is a universal tooling to recieve datasets/delta from a sender.")
 zfs.storage['arguments'], unknown = type_entrypoint.parse_known_args(namespace=zfs.storage['arguments'])
-
-module_entrypoints = argparse.ArgumentParser(parents=[common_parameters], description="A set of common parameters for the tooling", add_help=True)
-# Full Sync arguments
-utility_options = module_entrypoints.add_mutually_exclusive_group(required=True)
-utility_options.add_argument("--full-sync", default=False, action="store_true", help="Performs a full sync and transfer of a pool/dataset.")
-utility_options.add_argument("--send-delta", default=False, action="store_true", help="Sends a delta between two snapshots of a pool/dataset.")
-utility_options.add_argument("--snapshot", default=False, action="store_true", help="Takes a snapshot of a pool/dataset.")
-utility_options.add_argument("--reciever", default=False, action="store_true", help="Turns on reciever mode, which is a universal tooling to recieve datasets/delta from a sender.")
-
-zfs.storage['arguments'], unknown = module_entrypoints.parse_known_args(namespace=zfs.storage['arguments'])
 
 args = zfs.storage['arguments']
 # if not any([args.full_sync, args.send_delta, args.snapshot]):
