@@ -1,7 +1,6 @@
 import logging
 from .snapshots.delta import DeltaReader
 from .pool import PoolRestore
-from .models import ZFSSnapshotDelta, ZFSPool
 from .logger import log
 
 workers = {}

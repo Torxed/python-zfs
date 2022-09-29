@@ -1,8 +1,8 @@
-import pydantic
+# import pydantic
 
-class ZFSEndFrame(pydantic.BaseModel):
-	transfer_id :int # B
+# class ZFSEndFrame(pydantic.BaseModel):
+# 	transfer_id :int # B
 
-	@property
-	def id(self):
-		return self.transfer_id
+# 	@property
+# 	def id(self):
+# 		return self.transfer_id

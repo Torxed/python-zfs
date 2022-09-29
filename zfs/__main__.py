@@ -50,12 +50,18 @@ if args.full_sync:
 
 	pool = zfs.get_volume(args.pool)
 
-	postnord = zfs.NetNode(
-		interface=args.interface,
-		source=zfs.NetNodeAddress(mac_address=args.source_mac, ipv4_address=args.source_ip),
-		destination=zfs.NetNodeAddress(mac_address=args.destination_mac, ipv4_address=args.destination_ip),
-		udp_port=zfs.storage['arguments'].udp_port
-	)
+	postnord = {
+		'interface' : args.interface,
+		'source' : {
+			'mac_address' : args.source_mac,
+			'ipv4_address' : args.source_ip
+		},
+		'destination' : {
+			'mac_address' : args.destination_mac,
+			'ipv4_address' : args.destination_ip
+		},
+		'udp_port' : zfs.storage['arguments'].udp_port
+	}
 
 	with zfs.Pool(zfs.ZFSPool(name=args.pool, transfer_id=1)) as stream:
 		zfs.networking.send(stream=stream, addressing=postnord)

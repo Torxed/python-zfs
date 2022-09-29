@@ -3,7 +3,6 @@ import zlib
 import logging
 import random
 import struct
-from ..models import Ethernet, IPv4, UDP, ZFSFrame
 from ..storage import storage
 from ..logger import log
 from .common import promisc, ETH_P_ALL	, SOL_PACKET, PACKET_AUXDATA
@@ -27,21 +26,21 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 
 	stream_information = stream.pre_flight_info
 	log(f"Telling reciever to set up {repr(stream)}, resending this {resend_buffer} time(s)", fg="gray", level=logging.INFO)
-	for resend in range(resend_buffer):
-		frame = Ethernet(
-			source=str(addressing.source.mac_address),
-			destination=str(addressing.destination.mac_address),
-			payload_type=8,
-			payload=IPv4(
-				source=addressing.source.ipv4_address,
-				destination=addressing.destination.ipv4_address,
-				payload=UDP(destination=addressing.udp_port, payload=stream_information)
-			)
-		)
-		transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+	# for resend in range(resend_buffer):
+	# 	frame = Ethernet(
+	# 		source=str(addressing.source.mac_address),
+	# 		destination=str(addressing.destination.mac_address),
+	# 		payload_type=8,
+	# 		payload=IPv4(
+	# 			source=addressing.source.ipv4_address,
+	# 			destination=addressing.destination.ipv4_address,
+	# 			payload=UDP(destination=addressing.udp_port, payload=stream_information)
+	# 		)
+	# 	)
+	# 	transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
 
-	mac_destination = b''.join([struct.pack('B', int(mac_part, 16)) for mac_part in str(addressing.destination.mac_address).split(':')])
-	mac_source = b''.join([struct.pack('B', int(mac_part, 16)) for mac_part in str(addressing.source.mac_address).split(':')])
+	mac_destination = b''.join([struct.pack('B', int(mac_part, 16)) for mac_part in str(addressing['destination']['mac_address']).split(':')])
+	mac_source = b''.join([struct.pack('B', int(mac_part, 16)) for mac_part in str(addressing['source']['mac_address']).split(':')])
 	mac_frame_type = struct.pack('H', 8)
 
 	mac_header = mac_destination + mac_source + mac_frame_type
@@ -57,11 +56,11 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 	protocol = struct.pack('B', 17)
 	checksum = struct.pack('>H', 0)
 
-	ip_source = b''.join([struct.pack('B', int(addr_part)) for addr_part in str(addressing.source.ipv4_address).split('.')])
-	ip_destination = b''.join([struct.pack('B', int(addr_part)) for addr_part in str(addressing.destination.ipv4_address).split('.')])
+	ip_source = b''.join([struct.pack('B', int(addr_part)) for addr_part in str(addressing['source']['ipv4_address']).split('.')])
+	ip_destination = b''.join([struct.pack('B', int(addr_part)) for addr_part in str(addressing['destination']['ipv4_address']).split('.')])
 
 	udp_source = struct.pack('>H', random.randint(32768, 60999))
-	udp_destination = struct.pack('>H', addressing.udp_port)
+	udp_destination = struct.pack('>H', addressing['udp_port'])
 	udp_checksum = struct.pack('>H', 0)
 
 	while (data := stream.read(chunk_length)):
@@ -122,23 +121,23 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 		# socket.sendto(frame.pack(), addressing.destination.ipv4_address)
 		# socket.sendmsg(frame.pack(), response.frame.request_frame.auxillary_data_raw, response.frame.request_frame.flags, (response.frame.request_frame.server.configuration.interface, 68))
 
-		transmission_socket.sendmsg([frame], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+		transmission_socket.sendmsg([frame], aux_data, flags, (storage['arguments'].interface, addressing['udp_port']))
 		
 		previous_data = data
 		frame_index += 1
 
 	log(f"Telling reciever that we are finished with {repr(stream)}, resending this {resend_buffer} time(s)", fg="green", level=logging.INFO)
-	for resend in range(resend_buffer):
-		frame = Ethernet(
-			source=str(addressing.source.mac_address),
-			destination=str(addressing.destination.mac_address),
-			payload_type=8,
-			payload=IPv4(
-				source=addressing.source.ipv4_address,
-				destination=addressing.destination.ipv4_address,
-				payload=UDP(destination=addressing.udp_port, payload=stream.end_frame)
-			)
-		)
-		transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+	# for resend in range(resend_buffer):
+	# 	frame = Ethernet(
+	# 		source=str(addressing.source.mac_address),
+	# 		destination=str(addressing.destination.mac_address),
+	# 		payload_type=8,
+	# 		payload=IPv4(
+	# 			source=addressing.source.ipv4_address,
+	# 			destination=addressing.destination.ipv4_address,
+	# 			payload=UDP(destination=addressing.udp_port, payload=stream.end_frame)
+	# 		)
+	# 	)
+	# 	transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
 
 	promisciousMode.off()
