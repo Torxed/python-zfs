@@ -123,6 +123,9 @@ class Reciever:
 								"""
 								yield [frame_type, struct.unpack('B', data[1:2])[0]]
 
+								end_frame_recieved = True
+								break
+
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
 			# Informational frame for a snapshot (not delta) recieved (always starts with 0)
