@@ -3,6 +3,11 @@ import argparse
 import logging
 import ipaddress
 
+from .exceptions import (
+	RestoreComplete,
+	RequirementError,
+	SysCallError
+)
 from .storage import storage
 from .logger import log
 

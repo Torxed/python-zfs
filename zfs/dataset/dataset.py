@@ -8,7 +8,7 @@ import typing
 from ..list import snapshots, get_volume
 from ..storage import storage
 from ..logger import log
-from ..exceptions import SysCallError
+from ..exceptions import SysCallError, RestoreComplete
 from ..general import (
 	generate_transmission_id,
 	SysCommand
@@ -123,16 +123,21 @@ class DatasetRestore:
 		if get_volume(self.pool) is None:
 			raise ValueError(f"Pool '{self.pool}' does not exist, can not perform Dataset Restore!")
 
+		log(f"Setting up {self}", level=logging.INFO, fg="orange")
+
 	@property
 	def name(self):
 		if storage['arguments'].dataset:
 			return storage['arguments'].dataset
 
-		return self.dataset_info[2]
+		return self.dataset_info[2].split('/', 1)[1]
 
 	@property
 	def pool(self):
-		return self.name.split('/')[0]
+		if storage['arguments'].pool:
+			return storage['arguments'].pool
+
+		return self.name.split('/', 1)[0]
 
 	def __enter__(self):
 		return self
@@ -144,7 +149,7 @@ class DatasetRestore:
 		self.close()
 
 	def __repr__(self):
-		return f"DatasetRestore(dataset={repr(self.dataset_info)}[{self.name}], restore_index={self.restored[-1]}"
+		return f"DatasetRestore(dataset={self.pool}/{self.name}, restore_index={self.restored[-1]}"
 
 	def restore(self, frame):
 		if not self.worker:
@@ -153,7 +158,7 @@ class DatasetRestore:
 				self.worker = FakePopenDestination(storage['arguments'].dummy_data)
 			else:
 				self.worker = subprocess.Popen(
-					["zfs", "recv", "-F", self.name],
+					["zfs", "recv", "-F", f"{self.pool}/{self.name}"],
 					shell=False,
 					stdout=subprocess.PIPE,
 					stdin=subprocess.PIPE,
@@ -166,8 +171,8 @@ class DatasetRestore:
 		frame_index = frame[2]
 
 		if frame_index in self.restored:
-			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
-			return self.close()
+			log(f"Chunk is already restored: {repr(frame)}", level=logging.DEBUG, fg="gray")
+			return None
 
 		if frame_index != (self.restored[-1] + 1) % 255:
 			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
@@ -204,4 +209,4 @@ class DatasetRestore:
 			self.worker.stdin.close()
 
 		log(f'Closing restore on: {repr(self)} ({self.ended - self.started}s elapsed)', level=logging.INFO, fg="green")
-		exit(1)
+		raise RestoreComplete(session=self)

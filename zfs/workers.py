@@ -17,5 +17,6 @@ def setup_worker(transfer_id, information):
 		log(f"Setting up a PoolRestore reader for {information}", level=logging.INFO, fg="grey")
 		workers[transfer_id] = PoolRestore(information)
 	elif information[0] == 0:
-		log(f"Setting up a DatasetRestore reader for {information}", level=logging.INFO, fg="grey")
 		workers[transfer_id] = DatasetRestore(information)
+	else:
+		raise ValueError(f"Pre-flight type {information[0]} has not been implemented.")

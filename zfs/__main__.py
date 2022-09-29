@@ -25,16 +25,16 @@ common_parameters.add_argument("--udp-port", default=1337, nargs="?", type=ipadd
 
 common_parameters.add_argument("--delta-start", nargs="?", type=str, help="Which is the source of the delta (the starting point of the delta).")
 common_parameters.add_argument("--delta-end", nargs="?", type=str, help="Which is the end of the delta.")
-common_parameters.add_argument("--full-sync", default=False, action="store_true", help="Performs a full sync and transfer of a pool/dataset.")
-common_parameters.add_argument("--send-delta", default=False, action="store_true", help="Sends a delta between two snapshots of a pool/dataset.")
 common_parameters.add_argument("--snapshot", default=False, action="store_true", help="Takes a snapshot of a pool/dataset.")
+common_parameters.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
+common_parameters.add_argument("--dataset", nargs="?", type=str, help="Defines which dataset to perform the action on.")
 
 zfs.storage['arguments'], unknown = common_parameters.parse_known_args(namespace=zfs.storage['arguments'])
 
 type_entrypoint = argparse.ArgumentParser(parents=[common_parameters], description="A set of common parameters for the tooling", add_help=True)
 type_options = type_entrypoint.add_mutually_exclusive_group(required=True)
-type_options.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
-type_options.add_argument("--dataset", nargs="?", type=str, help="Defines which dataset to perform the action on.")
+type_options.add_argument("--full-sync", default=False, action="store_true", help="Performs a full sync and transfer of a pool/dataset.")
+type_options.add_argument("--send-delta", default=False, action="store_true", help="Sends a delta between two snapshots of a pool/dataset.")
 type_options.add_argument("--reciever", default=False, action="store_true", help="Turns on reciever mode, which is a universal tooling to recieve datasets/delta from a sender.")
 zfs.storage['arguments'], unknown = type_entrypoint.parse_known_args(namespace=zfs.storage['arguments'])
 
@@ -70,7 +70,7 @@ if args.full_sync:
 		with zfs.Dataset(zfsObj) as stream:
 			zfs.networking.send(stream=stream, addressing=postnord)
 	else:
-		raise KeyError(f"Could not locate pool or dataset.")
+		raise KeyError(f"Could not locate pool {args.pool} or dataset {args.dataset}.")
 
 elif args.reciever:
 	with zfs.networking.Reciever(addr='', port=zfs.storage['arguments'].udp_port) as listener:
@@ -91,4 +91,8 @@ elif args.reciever:
 
 				# elif type(zfs_recieved_obj) == zfs.ZFSEndFrame:
 				elif frame_type == 4:
-					zfs.workers[transfer_id].close()
+					if transfer_id in zfs.workers:
+						try:
+							zfs.workers[transfer_id].close()
+						except zfs.RestoreComplete:
+							del(zfs.workers[transfer_id])

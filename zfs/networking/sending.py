@@ -162,17 +162,28 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 		frame_index += 1
 
 	log(f"Telling reciever that we are finished with {repr(stream)}, resending this {resend_buffer} time(s)", fg="green", level=logging.INFO)
-	# for resend in range(resend_buffer):
-	# 	frame = Ethernet(
-	# 		source=str(addressing.source.mac_address),
-	# 		destination=str(addressing.destination.mac_address),
-	# 		payload_type=8,
-	# 		payload=IPv4(
-	# 			source=addressing.source.ipv4_address,
-	# 			destination=addressing.destination.ipv4_address,
-	# 			payload=UDP(destination=addressing.udp_port, payload=stream.end_frame)
-	# 		)
-	# 	)
-	# 	transmission_socket.sendmsg([frame.pack()], aux_data, flags, (storage['arguments'].interface, addressing.udp_port))
+	stream_end_payload = struct.pack('BB', 4, stream.transfer_id)
+	udp_length = len(stream_end_payload)
+
+	ethernet = mac_header
+	ipv4 = version_and_header_length
+	ipv4 += DSC_ECN
+	ipv4 += struct.pack('>H', 20 + 8 + udp_length) # 20 = IP Length, 8 = UDP length, len(stream_end_payload) = data
+	ipv4 += identification
+	ipv4 += fragmentation
+	ipv4 += ttl
+	ipv4 += protocol
+	ipv4 += checksum
+	ipv4 += ip_source
+	ipv4 += ip_destination
+	udp = udp_source
+	udp += udp_destination
+	udp += struct.pack('>H', udp_length)
+	udp += udp_checksum
+	udp += stream_end_payload
+
+	end_frame = ethernet + ipv4 + udp
+	for i in range(3):
+		transmission_socket.sendmsg([end_frame], aux_data, flags, (storage['arguments'].interface, addressing['udp_port']))
 
 	promisciousMode.off()

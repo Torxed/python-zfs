@@ -16,7 +16,7 @@ def volumes() -> Union[ZFSPool, ZFSDataset]:
 		}
 
 	else:
-		worker = SysCommandWorker('zfs list -H')
+		worker = SysCommandWorker('zfs list -H', poll_delay=0.5)
 		line = b''
 		while worker.is_alive() or len(line) > 0:
 			for line in worker:

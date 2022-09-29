@@ -167,9 +167,6 @@ class Reciever:
 					Frame type 3 is and END frame to a given transmission.
 					"""
 					yield [frame_type, struct.unpack('B', data[1:2])[0]]
-					# yield ZFSEndFrame(
-					# 	transfer_id=struct.unpack('B', data[1:2])[0]
-					# )
 
 	def recieve_frame(self, frame, sender):
 		if frame[0] == 0:
