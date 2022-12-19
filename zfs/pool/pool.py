@@ -5,6 +5,7 @@ import logging
 import signal
 import time
 import typing
+import traceback
 from ..list import snapshots
 from ..storage import storage
 from ..logger import log
@@ -41,7 +42,7 @@ class Pool:
 
 	def __exit__(self, *args):
 		if args[0]:
-			print(args)
+			traceback.print_tb(args[2])
 
 		if self.worker:
 			self.worker.stdout.close()
@@ -88,7 +89,6 @@ class Pool:
 
 	@property
 	def pre_flight_info(self):
-		print(self.pool_obj)
 		return (
 			struct.pack('B', 1) # Frame type 1 = Full Image
 			+ struct.pack('B', self.transfer_id) # Which session are we initating
@@ -125,7 +125,7 @@ class PoolRestore:
 
 	def __exit__(self, *args):
 		if args[0]:
-			print(args)
+			traceback.print_tb(args[2])
 
 		self.close()
 
@@ -152,8 +152,8 @@ class PoolRestore:
 		frame_index = frame[2]
 
 		if frame_index in self.restored:
-			log(f"Chunk is already restored: {repr(frame)}", level=logging.INFO, fg="red")
-			return self.close()
+			log(f"Chunk is already restored: {repr(frame)}", level=logging.DEBUG, fg="gray")
+			return
 
 		if frame_index != (self.restored[-1] + 1) % 255:
 			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
@@ -167,6 +167,8 @@ class PoolRestore:
 		try:
 			self.worker.stdin.write(frame[5])
 			self.worker.stdin.flush()
+
+			log(f"Restored {frame_index} on {self}", level=logging.INFO, fg="gray")
 		except:
 			try:
 				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))

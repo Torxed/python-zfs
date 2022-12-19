@@ -5,6 +5,7 @@ import logging
 import signal
 import time
 import typing
+import traceback
 from ..list import snapshots, get_volume
 from ..storage import storage
 from ..logger import log
@@ -41,7 +42,7 @@ class Dataset:
 
 	def __exit__(self, *args):
 		if args[0]:
-			print(args)
+			traceback.print_tb(args[2])
 
 		if self.worker:
 			self.worker.stdout.close()
@@ -144,7 +145,7 @@ class DatasetRestore:
 
 	def __exit__(self, *args):
 		if args[0]:
-			print(args)
+			traceback.print_tb(args[2])
 
 		self.close()
 

@@ -4,6 +4,7 @@ import socket
 import struct
 import zlib
 import binascii
+import traceback
 
 from ..storage import storage
 from .common import promisc, ETH_P_ALL, SOL_PACKET, PACKET_AUXDATA
@@ -45,7 +46,7 @@ class Reciever:
 
 	def __exit__(self, *args):
 		if args[1]:
-			print(args)
+			traceback.print_tb(args[2])
 
 	def __iter__(self):
 		if self.socket:

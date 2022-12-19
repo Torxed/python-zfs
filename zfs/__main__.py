@@ -95,4 +95,6 @@ elif args.reciever:
 						try:
 							zfs.workers[transfer_id].close()
 						except zfs.RestoreComplete:
-							del(zfs.workers[transfer_id])
+							pass
+							
+						del(zfs.workers[transfer_id])
