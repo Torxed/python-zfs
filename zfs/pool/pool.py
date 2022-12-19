@@ -168,7 +168,11 @@ class PoolRestore:
 			self.worker.stdin.write(frame[5])
 			self.worker.stdin.flush()
 		except:
-			raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
+			try:
+				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
+			except ValueError:
+				log(f'Worker is already closed, silently ignoring restore on frame index: {frame_index}', level=logging.INFO, fg="yellow")
+				pass # Worker is already closed
 
 		# if not storage['arguments'].dummy_data:
 		# 	if self.pollobj.poll(0):
@@ -188,6 +192,6 @@ class PoolRestore:
 			self.worker.send_signal(signal.SIGTERM)
 			self.worker.stdout.close()
 			self.worker.stdin.close()
+			self.worker.stderr.close()
 
-		log(f'Closing restore on: {repr(self)} ({self.ended - self.started}s elapsed)', level=logging.INFO, fg="green")
-		exit(1)
+			log(f'Closed restore on: {repr(self)} ({self.ended - self.started}s elapsed)', level=logging.INFO, fg="green")

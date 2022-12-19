@@ -73,6 +73,9 @@ class FakePopenDestination:
 		self.stderr = io.BytesIO()
 		self.stdin = fake_data.open('wb')
 
+	def send_signal(self, signal):
+		pass
+
 class SysCommandWorker:
 	def __init__(self,
 		cmd :Union[str, List[str]],
