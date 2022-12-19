@@ -168,7 +168,8 @@ class PoolRestore:
 			self.worker.stdin.write(frame[5])
 			self.worker.stdin.flush()
 
-			log(f"Restored {frame_index} on {self}", level=logging.INFO, fg="gray")
+			if storage['arguments'].debug:
+				log(f"Restored {frame_index} on {self}", level=logging.INFO, fg="gray")
 		except:
 			try:
 				raise ValueError(self.worker.stdout.read(1024).decode('UTF-8'))
