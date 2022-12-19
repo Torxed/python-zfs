@@ -113,3 +113,42 @@ with zfs.stream.Reciever(addr='', port=1337) as stream:
 $ viztracer python -m zfs --reciever --interface eth0 --framesize 9000
 ```
 Load `result.json` into https://ui.perfetto.dev/ and dig in.
+
+# Running testscenario without zfs
+
+## Creating isolated networking *(veth interface pair)*:
+```bash
+# Create veth pair
+ip link add dev testif-in type veth peer name testif-out
+# Set IP addresses
+ip addr add 192.168.1.1 dev testif-in    # Make sure it doesn't collide
+ip addr add 192.168.1.2 dev testif-out   # with existing setups on your network.
+# Set MAC addresses
+ip link set dev testif-in address '46:dc:e7:58:d0:a2'
+ip link set dev testif-out address 'e2:ff:48:6e:a9:fe'
+# Bring it all up
+ip link set dev testif-in up
+ip link set dev testif-out up
+
+```
+
+## Creating payload *(a known payload)*:
+```
+dd if=/dev/urandom of=./small.img bs=1M count=1
+```
+
+## Start reciever
+
+```
+$ python -m zfs --reciever --interface testif-out --dummy-data ./small_recv.img
+```
+
+## Starting sender
+
+```
+$ python -m zfs --interface testif-in --full-sync --dummy-data ~/snall.img --pool testing --destination-ip 192.168.1.2 --destination-mac 'e2:ff:48:6e:a9:fe' --source-ip '192.168.1.1' --source-mac '46:dc:e7:58:d0:a2'
+```
+
+## Debugging
+
+Running wireshark on `testif-in` *(and `-out`)* should show traffic, which should have correct IP/UDP headers, with a payload matching the defined structure found in this readme *(TBD)*.
