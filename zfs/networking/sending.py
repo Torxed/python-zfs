@@ -3,11 +3,12 @@ import zlib
 import logging
 import random
 import struct
+import time
 from ..storage import storage
 from ..logger import log
 from .common import promisc, ETH_P_ALL	, SOL_PACKET, PACKET_AUXDATA
 
-def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
+def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None, rate_limit=None):
 	if chunk_length is None:
 		# Ethernet/IP/UDP headers are 42 byte (estimation)
 		chunk_length = storage['arguments'].framesize -55
@@ -160,6 +161,9 @@ def send(stream, addressing, on_send=None, resend_buffer=2, chunk_length=None):
 		
 		previous_data = data
 		frame_index += 1
+
+		if rate_limit:
+			time.sleep(rate_limit)
 
 	log(f"Telling reciever that we are finished with {repr(stream)}, resending this {resend_buffer} time(s)", fg="green", level=logging.INFO)
 	stream_end_payload = struct.pack('BB', 4, stream.transfer_id)
