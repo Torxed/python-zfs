@@ -49,6 +49,8 @@ class Pool:
 
 	@property
 	def transfer_id(self):
+		if self.pool_obj.transfer_id is None:
+			self.pool_obj.transfer_id = 0
 		return self.pool_obj.transfer_id
 
 	@property
@@ -86,10 +88,11 @@ class Pool:
 
 	@property
 	def pre_flight_info(self):
+		print(self.pool_obj)
 		return (
 			struct.pack('B', 1) # Frame type 1 = Full Image
-			+ struct.pack('B', self.pool_obj.transfer_id) # Which session are we initating
-			+ struct.pack('B', len(self.pool_obj.name)) + bytes(self.pool_obj.name, 'UTF-8') # The volume name
+			+ struct.pack('B', self.transfer_id) # Which session are we initating
+			+ struct.pack('B', len(self.name)) + bytes(self.name, 'UTF-8') # The volume name
 		)
 
 	@property

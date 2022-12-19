@@ -146,7 +146,7 @@ $ python -m zfs --reciever --interface testif-out --dummy-data ./small_recv.img
 ## Starting sender
 
 ```
-$ python -m zfs --interface testif-in --full-sync --dummy-data ~/snall.img --pool testing --destination-ip 192.168.1.2 --destination-mac 'e2:ff:48:6e:a9:fe' --source-ip '192.168.1.1' --source-mac '46:dc:e7:58:d0:a2'
+$ python -m zfs --interface testif-in --full-sync --dummy-data ./small.img --pool testing --destination-ip 192.168.1.2 --destination-mac 'e2:ff:48:6e:a9:fe' --source-ip '192.168.1.1' --source-mac '46:dc:e7:58:d0:a2'
 ```
 
 ## Debugging

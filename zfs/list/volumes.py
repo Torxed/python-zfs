@@ -7,13 +7,13 @@ from ..models import ZFSPool, ZFSDataset
 
 def volumes() -> Union[ZFSPool, ZFSDataset]:
 	if storage['arguments'].dummy_data:
-		yield {
-			"name": "dummy",
-			"used": "1.0G",
-			"avail": "2.0G",
-			"refer": "-",
-			"mountpoint": "-"
-		}
+		yield ZFSPool(
+			name="testing",
+			used="0.5G",
+			available="1.0G",
+			refer="-",
+			mountpoint="-"
+		)
 
 	else:
 		worker = SysCommandWorker('zfs list -H', poll_delay=0.5)
