@@ -4,3 +4,5 @@
 **/**.img
 /*.json
 /*.bin
+build/
+python_zfs.egg-info/

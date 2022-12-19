@@ -28,7 +28,6 @@ common_parameters.add_argument("--delta-end", nargs="?", type=str, help="Which i
 common_parameters.add_argument("--snapshot", default=False, action="store_true", help="Takes a snapshot of a pool/dataset.")
 common_parameters.add_argument("--pool", nargs="?", type=str, help="Defines which pool to perform the action on.")
 common_parameters.add_argument("--dataset", nargs="?", type=str, help="Defines which dataset to perform the action on.")
-common_parameters.add_argument("--rate-limit", nargs="?", type=float, help="Defines the sleep duration between each frame.")
 
 zfs.storage['arguments'], unknown = common_parameters.parse_known_args(namespace=zfs.storage['arguments'])
 

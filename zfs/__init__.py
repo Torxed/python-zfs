@@ -24,7 +24,7 @@ parent.add_argument("--log-dir", default=pathlib.Path("./").resolve(), type=path
 parent.add_argument("--debug", default=False, action="store_true", help="Turns on debugging output.")
 parent.add_argument("--dummy-data", nargs="?", type=pathlib.Path, help="Enables dummy data for any given action using a binary blob specified.")
 parent.add_argument("--framesize", default=1500, type=int, nargs="?", help="Sets MTU for the frames going out (this size includes headers).")
-
+parent.add_argument("--rate-limit", nargs="?", type=float, help="Defines the sleep duration between each frame.")
 
 storage['argparse'] = parent
 storage['arguments'], unknowns = parent.parse_known_args()
