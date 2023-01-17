@@ -38,8 +38,12 @@ def volumes() -> Union[ZFSPool, ZFSDataset]:
 						refer=refer if refer != b'-' else None,
 						mountpoint=mountpoint if mountpoint != b'-' else None
 					)
+
+				line = b'' # Reset for the for while loop
 				
-def get_volume(name :str):
+def get_volume(name :str) -> ZFSPool | ZFSDataset | None:
 	for volume in volumes():
 		if volume.name.startswith(name):
 			return volume
+
+	return None

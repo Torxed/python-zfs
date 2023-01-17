@@ -122,7 +122,7 @@ class DatasetRestore:
 		self.ended = None
 
 		if get_volume(self.pool) is None:
-			raise ValueError(f"Pool '{self.pool}' does not exist, can not perform Dataset Restore!")
+			raise ValueError(f"Dataset '{self.pool}/{self.name}' does not exist, can not perform Dataset Restore!")
 
 		log(f"Setting up {self}", level=logging.INFO, fg="orange")
 
@@ -138,7 +138,7 @@ class DatasetRestore:
 		if storage['arguments'].pool:
 			return storage['arguments'].pool
 
-		return self.name.split('/', 1)[0]
+		return self.dataset_info[2].split('/', 1)[0]
 
 	def __enter__(self):
 		return self
