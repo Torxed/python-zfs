@@ -10,3 +10,7 @@ class ZFSPool():
 	mountpoint: Optional[str] = None
 	transfer_id: Optional[int] = None
 	stream_type: int = 1
+
+	@property
+	def pool(self):
+		return self.name

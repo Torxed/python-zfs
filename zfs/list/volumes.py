@@ -24,7 +24,8 @@ def volumes() -> Union[ZFSPool, ZFSDataset]:
 
 				if '/' in name:
 					yield ZFSDataset(
-						name=name,
+						name=name.split('/')[1],
+						pool=name.split('/')[0],
 						used=used if used != b'-' else None,
 						available=avail if avail != b'-' else None,
 						refer=refer if refer != b'-' else None,
@@ -43,7 +44,15 @@ def volumes() -> Union[ZFSPool, ZFSDataset]:
 				
 def get_volume(name :str) -> ZFSPool | ZFSDataset | None:
 	for volume in volumes():
-		if volume.name.startswith(name):
-			return volume
+		if '/' in name:
+			# Skip ZFSPools as only datasets can contain /
+			if type(volume) == ZFSPool:
+				continue
+			
+			if volume.pool.startswith(name.split('/')[0]) and volume.name.startswith(name.split('/')[1]):
+				return volume
+		else:
+			if volume.pool.startswith(name):
+				return volume
 
 	return None

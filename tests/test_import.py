@@ -98,7 +98,7 @@ def test_sending_full_image():
 	zfs.SysCommand(f"zpool create -f {pool_name} {build_root}/testimage.img")
 	zfs.SysCommand(f"zfs create {pool_name}/testsync")
 
-	pool = zfs.list.get_volume(f'{pool_name}/testsync')
+	pool = zfs.Dataset(zfs.list.get_volume(f'{pool_name}/testsync'))
 
 	snapshot1 = pool.take_snapshot()
 
@@ -120,4 +120,9 @@ def test_sending_full_image():
 	except zfs.exceptions.SysCallError:
 		pass
 
+	try:
+		zfs.SysCommand(f"zpool destroy {pool_name}")
+	except zfs.exceptions.SysCallError:
+		pass
 
+	pathlib.Path(f"{build_root}/testimage.img").unlink()

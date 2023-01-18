@@ -1,3 +1,33 @@
+import logging
+import struct
+import zlib
+from subprocess import Popen, PIPE
+from dataclasses import dataclass
+from typing import Union, Optional
+from .. import log
+
+@dataclass
+class Snapshot():
+	name :str
+	index_id :int
+	used :str | None = None
+	avail :str | None = None
+	refer :str | None = None
+	mountpoint :str | None = None
+	worker :Popen | None = None
+	
+	def destroy(self):
+		from .. import SysCommand
+
+		log(f"Destroying snapshot {repr(self)}", fg="red", level=logging.INFO)
+		SysCommand(f'zfs destroy {self.name}')
+
+	def restore(self):
+		from .. import SysCommand
+
+		log(f"Rolling back ZFS snapshot {repr(self)}", fg="orange", level=logging.INFO)
+		SysCommand(f'zfs rollback {self.name}')
+
 # import pydantic
 # import logging
 # import struct

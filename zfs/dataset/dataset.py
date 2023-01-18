@@ -15,11 +15,9 @@ from ..general import (
 	SysCommand
 )
 
+
 class Dataset:
 	def __init__(self, dataset_obj, recursive :bool = True):
-		if '/' not in dataset_obj.name:
-			raise ValueError(f"Dataset() requires / in ZFSDataset() object as it indicates a dataset.")
-
 		if '@' in dataset_obj.name:
 			raise ValueError(f"Dataset() does not permit @ in ZFSDataset() object as it indicates a snapshot.")
 
@@ -59,19 +57,31 @@ class Dataset:
 		return self.dataset.name
 
 	@property
+	def pool(self):
+		return self.dataset.pool
+
+	@property
 	def stream_type(self):
 		return self.dataset.stream_type
 	
+	@property
+	def last_snapshots(self):
+		from ..list import last_snapshots
+		from ..models import Namespace
+
+		for snapshot in last_snapshots(Namespace(name=f"{self.pool}/{self.name}"), n=2):
+			yield snapshot
 
 	def take_master_snapshot(self):
-		if snaps := list(snapshots()):
-			highest_snapshot_number = max([snapshot['index_id'] for snapshot in snaps]) + 1
-		else:
-			highest_snapshot_number = 1
+		from ..models.snapshots import Snapshot
+		highest_snapshot_number = max([snapshot.index_id for snapshot in snapshots()]) + 1
 
-		SysCommand(f"zfs snapshot -r {self.name}@{highest_snapshot_number}")
+		SysCommand(f"zfs snapshot -r {self.pool}/{self.name}@{highest_snapshot_number}")
 
-		return f"{self.name}@{highest_snapshot_number}"
+		return Snapshot(f"{self.pool}/{self.name}@{highest_snapshot_number}", index_id=highest_snapshot_number)
+
+	def take_snapshot(self):
+		return self.take_master_snapshot()
 
 	def is_alive(self):
 		return self.worker.poll() is None
