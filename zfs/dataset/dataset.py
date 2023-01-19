@@ -33,7 +33,7 @@ class Dataset:
 		else:
 			state_snapshot = self.take_master_snapshot()
 
-			self.worker = subprocess.Popen(["zfs", "send", "-c", self.recursive, state_snapshot], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			self.worker = subprocess.Popen(["zfs", "send", "-c", self.recursive, state_snapshot.name], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			self.pollobj.register(self.worker.stdout.fileno(), select.EPOLLIN|select.EPOLLHUP)
 
 		return self
@@ -110,7 +110,7 @@ class Dataset:
 		return (
 			struct.pack('B', 0) # Frame type 1 = Full Image
 			+ struct.pack('B', self.transfer_id) # Which session are we initating
-			+ struct.pack('B', len(self.name)) + bytes(self.name, 'UTF-8') # The volume name
+			+ struct.pack('B', len(f"{self.pool}/{self.name}")) + bytes(f"{self.pool}/{self.name}", 'UTF-8') # The volume name
 		)
 
 	@property
