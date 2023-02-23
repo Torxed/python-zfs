@@ -154,7 +154,7 @@ class PoolRestore:
 
 		frame_index = frame[2]
 
-		if frame_index == self.restored:
+		if frame_index <= self.restored and frame_index != 0:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.DEBUG, fg="gray")
 			return
 
