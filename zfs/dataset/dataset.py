@@ -127,7 +127,7 @@ class DatasetRestore:
 		self.pollobj = select.epoll()
 		self.fileno = None
 		self.dataset_info = dataset
-		self.restored = [-1]
+		self.restored = -1
 		self.started = time.time()
 		self.ended = None
 
@@ -160,7 +160,7 @@ class DatasetRestore:
 		self.close()
 
 	def __repr__(self):
-		return f"DatasetRestore(dataset={self.pool}/{self.name}, restore_index={self.restored[-1]}"
+		return f"DatasetRestore(dataset={self.pool}/{self.name}, restore_index={self.restored}"
 
 	def restore(self, frame):
 		if not self.worker:
@@ -181,15 +181,15 @@ class DatasetRestore:
 
 		frame_index = frame[2]
 
-		if frame_index in self.restored:
+		if frame_index == self.restored:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.DEBUG, fg="gray")
 			return None
 
-		if frame_index != (self.restored[-1] + 1) % 255:
-			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
+		if frame_index != (self.restored + 1) % 255:
+			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
 			return self.close()
 
-		self.restored = self.restored[-4:] + [frame_index]
+		self.restored = frame_index
 
 		if storage['arguments'].debug:
 			log(f"Restoring Dataset using {repr(self)}", level=logging.DEBUG, fg="orange")
