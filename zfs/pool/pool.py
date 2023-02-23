@@ -112,7 +112,7 @@ class PoolRestore:
 		self.pollobj = select.epoll()
 		self.fileno = None
 		self.pool_info = pool
-		self.restored = [-1]
+		self.restored = -1
 		self.started = time.time()
 		self.ended = None
 
@@ -133,7 +133,7 @@ class PoolRestore:
 		self.close()
 
 	def __repr__(self):
-		return f"PoolRestore(pool={repr(self.pool_info)}[{self.name}], restore_index={self.restored[-1]}"
+		return f"PoolRestore(pool={repr(self.pool_info)}[{self.name}], restore_index={self.restored}"
 
 	def restore(self, frame):
 		if not self.worker:
@@ -154,15 +154,15 @@ class PoolRestore:
 
 		frame_index = frame[2]
 
-		if frame_index in self.restored:
+		if frame_index == self.restored:
 			log(f"Chunk is already restored: {repr(frame)}", level=logging.DEBUG, fg="gray")
 			return
 
-		if frame_index != (self.restored[-1] + 1) % 255:
-			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored[-1] + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
+		if frame_index != (self.restored + 1) % 255:
+			log(f"Chunk is not next in line, we have {self.restored}, and this was {frame_index}, we expected {(self.restored + 1) % 255} on {repr(frame)}", level=logging.WARNING, fg="red")
 			return self.close()
 
-		self.restored = self.restored[-4:] + [frame_index]
+		self.restored = frame_index
 
 		if storage['arguments'].debug:
 			log(f"Restoring Pool using {repr(self)}", level=logging.DEBUG, fg="orange")
